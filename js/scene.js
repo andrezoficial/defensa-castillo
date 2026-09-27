@@ -1,6 +1,12 @@
 class MainScene extends Phaser.Scene {
+  preload(){
+    const base='assets/sprites/';
+    for(const key of SPRITE_FRAME_KEYS) this.load.image(key, base+key+'.png');
+  }
   create(){
     GameState.scene=this;
+    this.setupPixelTextures();
+    this.setupCharacterAnims();
     this.drawTerrain(); this.drawDecorations(); this.drawPath(); this.drawCastle();
     this.previewGraphics=this.add.graphics().setDepth(8);
     this.addAmbientParticles();
@@ -48,5 +54,20 @@ class MainScene extends Phaser.Scene {
     for(let i=0;i<18;i++){const x=rng.between(0,800),y=rng.between(0,500),p=this.add.circle(x,y,rng.between(1,2),0xe6d59a,.18).setDepth(2);this.tweens.add({targets:p,y:y-rng.between(12,30),x:x+rng.between(-10,10),alpha:0,duration:rng.between(2500,5000),delay:rng.between(0,2500),repeat:-1,ease:'Sine.easeInOut'})}return g;
   }
   update(time,delta){updateTowers(time);updateEnemies(time,delta);checkWaveComplete()}
+  setupPixelTextures(){
+    // Sprites en pixel art: filtro NEAREST para que no se vean borrosos al escalarlos.
+    for(const key of SPRITE_FRAME_KEYS) this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+  }
+  setupCharacterAnims(){
+    // Crea animaciones idle/run para cada personaje a partir de sus 4 frames sueltos.
+    Object.entries(CHARACTER_ANIM_DEFS).forEach(([tex,cfg])=>{
+      ['idle','run'].forEach(kind=>{
+        const animKey=`${tex}_${kind}`;
+        if(this.anims.exists(animKey))return;
+        const frames=[0,1,2,3].map(i=>({key:`${tex}_${kind}_anim_f${i}`}));
+        this.anims.create({key:animKey,frames,frameRate:cfg.frameRate||7,repeat:-1});
+      });
+    });
+  }
 }
 function showWaveBanner(text){const scene=GameState.scene;const box=scene.add.rectangle(400,70,430,52,0x21150e,.92).setStrokeStyle(1,0xc59a4b,.8).setDepth(30).setAlpha(0).setScale(.8);const t=scene.add.text(400,70,text,{fontFamily:'Cinzel,serif',fontSize:'18px',fontStyle:'bold',color:'#f1d38b',stroke:'#120c08',strokeThickness:4}).setOrigin(.5).setDepth(31).setAlpha(0);scene.tweens.add({targets:[box,t],alpha:1,scale:1,duration:280,ease:'Back.Out',onComplete:()=>scene.tweens.add({targets:[box,t],alpha:0,y:'-=16',delay:850,duration:450,onComplete:()=>{box.destroy();t.destroy()}})})}

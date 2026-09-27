@@ -33,6 +33,39 @@ const ENEMY_TYPES = {
   boss: { name: 'Rey Ogro', color: 0x8b0000 },
 };
 
+// --- Sprites pixel-art (0x72 Dungeon Tileset II) ---
+// Lista de todos los frames sueltos que hay que precargar en scene.js:preload().
+const SPRITE_FRAME_KEYS = [
+  'goblin_idle_anim_f0','goblin_idle_anim_f1','goblin_idle_anim_f2','goblin_idle_anim_f3',
+  'goblin_run_anim_f0','goblin_run_anim_f1','goblin_run_anim_f2','goblin_run_anim_f3',
+  'chort_idle_anim_f0','chort_idle_anim_f1','chort_idle_anim_f2','chort_idle_anim_f3',
+  'chort_run_anim_f0','chort_run_anim_f1','chort_run_anim_f2','chort_run_anim_f3',
+  'orc_warrior_idle_anim_f0','orc_warrior_idle_anim_f1','orc_warrior_idle_anim_f2','orc_warrior_idle_anim_f3',
+  'orc_warrior_run_anim_f0','orc_warrior_run_anim_f1','orc_warrior_run_anim_f2','orc_warrior_run_anim_f3',
+  'ogre_idle_anim_f0','ogre_idle_anim_f1','ogre_idle_anim_f2','ogre_idle_anim_f3',
+  'ogre_run_anim_f0','ogre_run_anim_f1','ogre_run_anim_f2','ogre_run_anim_f3',
+  'elf_m_idle_anim_f0','elf_m_idle_anim_f1','elf_m_idle_anim_f2','elf_m_idle_anim_f3',
+  'elf_m_run_anim_f0','elf_m_run_anim_f1','elf_m_run_anim_f2','elf_m_run_anim_f3',
+  'wizzard_m_idle_anim_f0','wizzard_m_idle_anim_f1','wizzard_m_idle_anim_f2','wizzard_m_idle_anim_f3',
+  'wizzard_m_run_anim_f0','wizzard_m_run_anim_f1','wizzard_m_run_anim_f2','wizzard_m_run_anim_f3',
+];
+// Texturas base (sin sufijo _idle/_run_anim_fN) para las que hay que generar animaciones.
+const CHARACTER_ANIM_DEFS = {
+  goblin: { frameRate: 7 },
+  chort: { frameRate: 9 },
+  orc_warrior: { frameRate: 6 },
+  ogre: { frameRate: 5 },
+  elf_m: { frameRate: 6 },
+  wizzard_m: { frameRate: 5 },
+};
+// Qué textura y escala usa cada tipo de enemigo (altura base del sprite: 16 o 23 o 36 px).
+const ENEMY_SPRITE_DEFS = {
+  goblin: { tex: 'goblin', scale: 2.3 },
+  raider: { tex: 'chort', scale: 1.85 },
+  ogre: { tex: 'orc_warrior', scale: 2.35 },
+  boss: { tex: 'ogre', scale: 2.35 },
+};
+
 const INITIAL_GOLD = 150;
 const INITIAL_LIVES = 20;
 const MIN_TOWER_DISTANCE_TO_PATH = 38;
