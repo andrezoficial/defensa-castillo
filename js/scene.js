@@ -30,17 +30,17 @@ class MainScene extends Phaser.Scene {
     g.lineStyle(50,0x76522f,1);g.beginPath();g.moveTo(PATH_POINTS[0].x,PATH_POINTS[0].y);for(let i=1;i<PATH_POINTS.length;i++)g.lineTo(PATH_POINTS[i].x,PATH_POINTS[i].y);g.strokePath();
     const rng=new Phaser.Math.RandomDataGenerator([7]);for(let i=0;i<120;i++){const x=rng.between(0,800),y=rng.between(0,500);if(distToPath(x,y)<24){g.fillStyle(rng.pick([0x94734b,0x6b4b2b,0xa38157]),.55);g.fillEllipse(x,y,rng.between(2,5),rng.between(1,3))}}
     // wagon tracks
-    g.lineStyle(2,0x4e351f,.45);for(let off of [-9,9]){g.beginPath();for(let i=0;i<PATH_POINTS.length;i++){const p=PATH_POINTS[i];g.lineTo(p.x+off,p.y+off)}g.strokePath()}
+    g.lineStyle(2,0x4e351f,.45);for(let off of [-9,9]){g.beginPath();for(let i=0;i<PATH_POINTS.length;i++){const p=PATH_POINTS[i];if(i===0)g.moveTo(p.x+off,p.y+off);else g.lineTo(p.x+off,p.y+off)}g.strokePath()}
   }
   drawCastle(){
     const cx=785,cy=150,c=this.add.container(cx,cy).setDepth(5);
     c.add(this.add.ellipse(0,58,120,24,0x000000,.28));
     c.add(this.add.rectangle(0,0,88,105,0x777b78).setStrokeStyle(3,0x30312f));
-    const wall=c.add(this.add.graphics());wall.fillStyle(0x696d6a,1);for(let y=-45;y<45;y+=17)for(let x=-38;x<40;x+=19){wall.lineStyle(1,0x4b4e4c,.65);wall.strokeRect(x+(y%34===0?0:9),y,18,15)}
+    const wall=this.add.graphics();c.add(wall);wall.fillStyle(0x696d6a,1);for(let y=-45;y<45;y+=17)for(let x=-38;x<40;x+=19){wall.lineStyle(1,0x4b4e4c,.65);wall.strokeRect(x+(y%34===0?0:9),y,18,15)}
     [-48,48].forEach((x,i)=>{c.add(this.add.rectangle(x,10,25,122,0x626663).setStrokeStyle(3,0x2d302e));c.add(this.add.triangle(x,-63,-16,13,16,13,0,-20,i?0x7c3430:0x7c3430).setStrokeStyle(2,0x3b211b));});
-    const gate=c.add(this.add.rectangle(0,36,26,43,0x342217).setStrokeStyle(3,0x21140d));c.add(this.add.arc(0,37,26,180,360,false,0x4b321f,1).setStrokeStyle(3,0x21140d));
+    c.add(this.add.rectangle(0,36,26,43,0x342217).setStrokeStyle(3,0x21140d));c.add(this.add.arc(0,37,26,180,360,false,0x4b321f,1).setStrokeStyle(3,0x21140d));
     c.add(this.add.rectangle(0,-74,3,38,0x3a2618));c.add(this.add.triangle(2,-73,0,0,29,7,0,14,0xe7bd5b));
-    [-27,27].forEach(x=>{c.add(this.add.rectangle(x,14,4,15,0x352116));const glow=c.add(this.add.circle(x,0,12,0xf3a43c,.12));const flame=c.add(this.add.triangle(x,2,-4,5,4,5,0,-6,0xff9d2e));this.tweens.add({targets:[glow,flame],alpha:.45,scaleX:.8,scaleY:1.15,duration:260+Math.random()*180,yoyo:true,repeat:-1})});
+    [-27,27].forEach(x=>{c.add(this.add.rectangle(x,14,4,15,0x352116));const glow=this.add.circle(x,0,12,0xf3a43c,.12);const flame=this.add.triangle(x,2,-4,5,4,5,0,-6,0xff9d2e);c.add(glow);c.add(flame);this.tweens.add({targets:[glow,flame],alpha:.45,scaleX:.8,scaleY:1.15,duration:260+Math.random()*180,yoyo:true,repeat:-1})});
     c.add(this.add.text(-32,-8,'♜',{fontFamily:'serif',fontSize:22,color:'#d9d2b9'}));
   }
   addAmbientParticles(){
