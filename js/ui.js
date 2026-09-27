@@ -9,3 +9,52 @@ function showGameOver(win){document.getElementById('msg').style.display='flex';d
 function togglePause(){GameState.paused=!GameState.paused;const b=document.getElementById('pauseBtn');const o=document.getElementById('pauseOverlay');if(GameState.paused){GameState.scene.scene.pause();b.textContent='▶';o.style.display='flex'}else{GameState.scene.scene.resume();b.textContent='Ⅱ';o.style.display='none'}}
 function toggleSpeed(){const n=GameState.speedMultiplier===1?2:1;GameState.speedMultiplier=n;GameState.scene.sys.game.loop.timeScale=n;const b=document.getElementById('speedBtn');b.classList.toggle('active',n===2);b.textContent=n===2?'»×2':'»'}
 function bindUIEvents(){document.getElementById('towerBasic').addEventListener('click',()=>selectTower('basic'));document.getElementById('towerSlow').addEventListener('click',()=>selectTower('slow'));document.getElementById('towerArea').addEventListener('click',()=>selectTower('area'));document.getElementById('waveBtn').addEventListener('click',startWave);document.getElementById('restartBtn').addEventListener('click',()=>location.reload());document.getElementById('upgradeBtn').addEventListener('click',()=>{if(GameState.selectedPlacedTower)upgradeTower(GameState.selectedPlacedTower)});document.getElementById('sellBtn').addEventListener('click',()=>{if(GameState.selectedPlacedTower)sellTower(GameState.selectedPlacedTower)});document.getElementById('closeTowerPanel').addEventListener('click',deselectPlacedTower);document.getElementById('pauseBtn').addEventListener('click',togglePause);document.getElementById('speedBtn').addEventListener('click',toggleSpeed)}
+
+/* ===== FASE 3 · HUD / MENÚ / CONTROLES ===== */
+function updateCombatUI(){
+  const count=GameState.enemies.filter(e=>!e.dead).length;
+  const countEl=document.getElementById('enemyCount'); if(countEl) countEl.textContent=count;
+  const status=document.getElementById('combatStatus'), txt=document.getElementById('combatStatusText');
+  if(status&&txt){
+    const active=GameState.waveActive;
+    status.classList.toggle('active',active);
+    txt.textContent=active?`OLEADA ${GameState.wave} · DEFENDIENDO`:'DEFENSAS EN ESPERA';
+  }
+  const progress=document.getElementById('waveProgressBar'), progressText=document.getElementById('waveProgressText');
+  if(progress&&progressText){
+    const inCycle=GameState.wave%BOSS_WAVE_INTERVAL;
+    const step=inCycle===0&&GameState.wave>0?BOSS_WAVE_INTERVAL:inCycle;
+    progress.style.width=`${(step/BOSS_WAVE_INTERVAL)*100}%`;
+    progressText.textContent=`${step} / ${BOSS_WAVE_INTERVAL}`;
+  }
+  const wb=document.getElementById('waveBtn'), hint=document.getElementById('waveBtnHint');
+  if(wb){wb.classList.toggle('ready',!GameState.waveActive);if(hint)hint.textContent=GameState.waveActive?'Oleada en curso':'Prepárate para el ataque'}
+}
+const _updateHUD=updateHUD;
+updateHUD=function(){_updateHUD();updateCombatUI()};
+
+function startGamePresentation(){
+  const overlay=document.getElementById('startScreen');
+  if(overlay) overlay.classList.remove('active');
+  if(GameState.scene){GameState.scene.scene.resume();}
+  const status=document.getElementById('combatStatusText'); if(status) status.textContent='DEFENSAS EN ESPERA';
+}
+function bindPhase3UI(){
+  const start=document.getElementById('startGameBtn'), how=document.getElementById('howToBtn'), panel=document.getElementById('howToPanel'), close=document.getElementById('closeHowTo'), sound=document.getElementById('soundBtn');
+  start?.addEventListener('click',startGamePresentation);
+  how?.addEventListener('click',()=>panel?.classList.add('open'));
+  close?.addEventListener('click',()=>panel?.classList.remove('open'));
+  sound?.addEventListener('click',()=>document.body.classList.toggle('muted'));
+  document.addEventListener('keydown',e=>{
+    if(e.target.matches('input,textarea')) return;
+    if(e.code==='Space'){e.preventDefault();if(GameState.scene&&!GameState.waveActive)startWave()}
+    if(e.key.toLowerCase()==='p' && GameState.scene)togglePause();
+    if(e.key==='1')selectTower('basic');
+    if(e.key==='2')selectTower('slow');
+    if(e.key==='3')selectTower('area');
+    if(e.key==='Escape'){GameState.selectedTower=null;deselectPlacedTower();panel?.classList.remove('open')}
+  });
+  setInterval(updateCombatUI,120);
+}
+const _bindUIEvents=bindUIEvents;
+bindUIEvents=function(){_bindUIEvents();bindPhase3UI()};

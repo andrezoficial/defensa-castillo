@@ -7,6 +7,7 @@ class MainScene extends Phaser.Scene {
     this.input.on('pointerdown',p=>{if(p.y>GAME_HEIGHT)return;if(GameState.selectedTower){placeTower(p.x,p.y);drawPlacementPreview(p.x,p.y);return}const t=findTowerAt(p.x,p.y);t?selectPlacedTower(t):deselectPlacedTower()});
     this.input.on('pointermove',p=>drawPlacementPreview(p.x,p.y));
     updateHUD();
+    this.scene.pause();
   }
   drawTerrain(){
     this.add.rectangle(400,250,800,500,0x314d27);
