@@ -4,8 +4,9 @@
 
 function createTowerVisual(scene, x, y, type, color) {
   const container = scene.add.container(x, y);
+  const shadow = scene.add.ellipse(0, 16, 30, 10, 0x000000, 0.25);
   const base = scene.add.circle(0, 6, 16, 0x4d4d55).setStrokeStyle(2, 0x2a2a30);
-  container.add(base);
+  container.add([shadow, base]);
 
   if (type === 'basic') {
     const turret = scene.add.rectangle(0, -2, 20, 20, 0x6b5a45).setStrokeStyle(2, 0x2a2a30);
@@ -191,6 +192,7 @@ function shootAt(tower, enemy) {
         });
         const ring = scene.add.circle(targetX, targetY, AREA_BLAST_RADIUS, def.proj, 0.15);
         scene.tweens.add({ targets: ring, alpha: 0, scale: 1.4, duration: 250, onComplete: () => ring.destroy() });
+        scene.cameras.main.shake(120, 0.006);
       } else {
         if (!enemy.dead) {
           damageEnemy(enemy, def.dmg);

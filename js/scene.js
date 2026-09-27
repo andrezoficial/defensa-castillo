@@ -8,6 +8,7 @@ class MainScene extends Phaser.Scene {
     GameState.scene = this;
 
     this.drawTerrain();
+    this.drawDecorations();
     this.drawPath();
     this.drawCastle();
 
@@ -41,6 +42,49 @@ class MainScene extends Phaser.Scene {
       g.fillStyle(rng.pick([0x27401e, 0x35552a, 0x24391c]), 0.6);
       g.fillCircle(x, y, rng.between(3, 7));
     }
+  }
+
+  // Árboles, arbustos y rocas dispersos por la pradera, evitando el camino
+  // y la zona del castillo, para que el mapa no se sienta vacío.
+  drawDecorations() {
+    const rng = new Phaser.Math.RandomDataGenerator([99]);
+    const spots = [];
+    let attempts = 0;
+    while (spots.length < 14 && attempts < 400) {
+      attempts++;
+      const x = rng.between(20, 730);
+      const y = rng.between(20, GAME_HEIGHT - 20);
+      if (distToPath(x, y) < 55) continue;
+      if (spots.some(s => Math.hypot(s.x - x, s.y - y) < 40)) continue;
+      spots.push({ x, y });
+    }
+    spots.forEach((s) => {
+      const kind = rng.pick(['tree', 'tree', 'bush', 'rock']);
+      if (kind === 'tree') this.drawTree(s.x, s.y);
+      else if (kind === 'bush') this.drawBush(s.x, s.y);
+      else this.drawRock(s.x, s.y);
+    });
+  }
+
+  drawTree(x, y) {
+    this.add.ellipse(x, y + 14, 26, 10, 0x000000, 0.25);
+    this.add.rectangle(x, y + 6, 6, 16, 0x4a3018);
+    this.add.circle(x - 8, y - 6, 12, 0x2f4a24);
+    this.add.circle(x + 8, y - 6, 12, 0x35552a);
+    this.add.circle(x, y - 14, 13, 0x3f6633);
+  }
+
+  drawBush(x, y) {
+    this.add.ellipse(x, y + 8, 20, 7, 0x000000, 0.2);
+    this.add.circle(x - 6, y, 8, 0x2f4a24);
+    this.add.circle(x + 6, y, 8, 0x35552a);
+    this.add.circle(x, y - 4, 8, 0x3f6633);
+  }
+
+  drawRock(x, y) {
+    this.add.ellipse(x, y + 6, 16, 6, 0x000000, 0.2);
+    this.add.circle(x, y, 8, 0x6b6b73).setStrokeStyle(1, 0x3a3a40);
+    this.add.circle(x - 3, y - 2, 3, 0x82828a, 0.6);
   }
 
   drawPath() {
@@ -113,4 +157,36 @@ class MainScene extends Phaser.Scene {
     updateEnemies(time, delta);
     checkWaveComplete();
   }
+}
+
+// Banner animado ("¡Oleada N!") que aparece al iniciar cada asalto, con
+// una entrada elástica y un desvanecido hacia arriba.
+function showWaveBanner(text) {
+  const scene = GameState.scene;
+  const banner = scene.add.text(GAME_WIDTH / 2, 70, text, {
+    fontFamily: 'Cinzel, Georgia, serif',
+    fontSize: '26px',
+    fontStyle: 'bold',
+    color: '#f0c14b',
+    stroke: '#2a1f14',
+    strokeThickness: 4,
+  }).setOrigin(0.5).setAlpha(0).setScale(0.7).setDepth(20);
+
+  scene.tweens.add({
+    targets: banner,
+    alpha: 1,
+    scale: 1,
+    duration: 300,
+    ease: 'Back.Out',
+    onComplete: () => {
+      scene.tweens.add({
+        targets: banner,
+        alpha: 0,
+        y: 46,
+        delay: 900,
+        duration: 400,
+        onComplete: () => banner.destroy(),
+      });
+    },
+  });
 }
