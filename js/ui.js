@@ -1,4 +1,4 @@
-function selectTower(type){deselectPlacedTower();GameState.selectedTower=GameState.selectedTower===type?null:type;document.querySelectorAll('#buildButtons .tower-btn').forEach(b=>b.classList.remove('selected'));if(GameState.selectedTower){document.getElementById('tower'+type.charAt(0).toUpperCase()+type.slice(1)).classList.add('selected')}else clearPlacementPreview()}
+function selectTower(type){deselectPlacedTower();GameState.placementDragging=false;GameState.placementPointerId=null;GameState.selectedTower=GameState.selectedTower===type?null:type;document.querySelectorAll('#buildButtons .tower-btn').forEach(b=>b.classList.remove('selected'));if(GameState.selectedTower){document.getElementById('tower'+type.charAt(0).toUpperCase()+type.slice(1)).classList.add('selected');showBuildGrid()}else{clearPlacementPreview();hideBuildGrid()}}
 function animateStatChange(el,delta){el.classList.remove('stat-pulse-pos','stat-pulse-neg');void el.offsetWidth;el.classList.add(delta>0?'stat-pulse-pos':'stat-pulse-neg');const f=document.createElement('span');f.className='stat-float '+(delta>0?'stat-float-pos':'stat-float-neg');f.textContent=(delta>0?'+':'')+delta;el.parentElement.appendChild(f);f.addEventListener('animationend',()=>f.remove())}
 function updateHUD(){const g=document.getElementById('goldTxt'),l=document.getElementById('lifeTxt'),gd=GameState.gold-GameState.lastGold,ld=GameState.lives-GameState.lastLives;g.textContent=GameState.gold;l.textContent=GameState.lives;document.getElementById('waveTxt').textContent=GameState.wave;if(gd)animateStatChange(g,gd);if(ld)animateStatChange(l,ld);GameState.lastGold=GameState.gold;GameState.lastLives=GameState.lives}
 function toggleBossTag(show){document.getElementById('bossTag').style.display=show?'flex':'none'}
@@ -52,7 +52,7 @@ function bindPhase3UI(){
     if(e.key==='1')selectTower('basic');
     if(e.key==='2')selectTower('slow');
     if(e.key==='3')selectTower('area');
-    if(e.key==='Escape'){GameState.selectedTower=null;deselectPlacedTower();panel?.classList.remove('open')}
+    if(e.key==='Escape'){GameState.selectedTower=null;deselectPlacedTower();clearPlacementPreview();hideBuildGrid();panel?.classList.remove('open')}
   });
   setInterval(updateCombatUI,120);
 }

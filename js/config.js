@@ -74,6 +74,13 @@ const AREA_BLAST_RADIUS = 55;
 const SLOW_DURATION_MS = 1500;
 const SLOW_FACTOR = 0.45;
 
+// --- Casillas fijas de construcción ---
+// Las torres ya no se colocan libremente: se "enganchan" a una grilla de
+// posiciones fijas separadas BUILD_GRID_SIZE px, así nunca queda una
+// torre montada sobre otra ni pegada al camino.
+const BUILD_GRID_SIZE = 40;
+const BUILD_SNAP_MAX_DIST = 90; // si el clic queda más lejos que esto de cualquier casilla, no hace nada
+
 // --- Mejoras de torre ---
 const MAX_TOWER_LEVEL = 3;
 const SELL_REFUND_RATIO = 0.6;

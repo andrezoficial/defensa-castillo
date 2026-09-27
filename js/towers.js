@@ -16,16 +16,66 @@ function createTowerVisual(scene,x,y,type,color){
 function updateLevelPips(tower){if(tower.pips)tower.pips.destroy();const s=GameState.scene,g=s.add.graphics().setDepth(tower.y+40);const sx=tower.x-(tower.level-1)*5;for(let i=0;i<tower.level;i++){g.fillStyle(0xe7bd5b,1);g.fillCircle(sx+i*10,tower.y-39,3);g.lineStyle(1,0x5d411f,1);g.strokeCircle(sx+i*10,tower.y-39,3)}tower.pips=g}
 function getEffectiveStats(tower){return {...TOWER_DEFS[tower.type],...getTowerStats(tower.type,tower.level)}}
 function findTowerAt(x,y){for(const t of GameState.towers)if(Math.hypot(t.x-x,t.y-y)<26)return t;return null}
-function isValidPlacement(x,y,type){const def=TOWER_DEFS[type];if(GameState.gold<def.cost||y>GAME_HEIGHT-12)return false;if(distToPath(x,y)<MIN_TOWER_DISTANCE_TO_PATH)return false;for(const t of GameState.towers)if(Math.hypot(t.x-x,t.y-y)<MIN_TOWER_DISTANCE_TO_TOWER)return false;return true}
-function drawPlacementPreview(x,y){const s=GameState.scene;if(!s?.previewGraphics)return;const g=s.previewGraphics;g.clear();if(!GameState.selectedTower||y>GAME_HEIGHT)return;const d=TOWER_DEFS[GameState.selectedTower],valid=isValidPlacement(x,y,GameState.selectedTower),col=valid?0x8fb56b:0xd34d46;g.fillStyle(col,.08);g.fillCircle(x,y,d.range);g.lineStyle(2,col,.65);g.strokeCircle(x,y,d.range);g.lineStyle(1,0xffffff,.2);g.strokeCircle(x,y,d.range-5);g.fillStyle(col,.85);g.fillCircle(x,y,5)}
-function clearPlacementPreview(){GameState.scene?.previewGraphics?.clear()}
-function selectPlacedTower(tower){GameState.selectedTower=null;document.querySelectorAll('#buildButtons .tower-btn').forEach(b=>b.classList.remove('selected'));GameState.selectedPlacedTower=tower;showTowerPanel(tower);highlightTower(tower,true)}
+
+// --- Casillas fijas de construcción ---
+function computeBuildSlots(){
+  const slots=[];
+  for(let gx=20;gx<=GAME_WIDTH-20;gx+=BUILD_GRID_SIZE){
+    for(let gy=20;gy<=GAME_HEIGHT-20;gy+=BUILD_GRID_SIZE){
+      if(distToPath(gx,gy)<MIN_TOWER_DISTANCE_TO_PATH)continue; // muy cerca del camino
+      if(gx>680&&gy<270)continue; // reservado para el castillo
+      slots.push({x:gx,y:gy});
+    }
+  }
+  return slots;
+}
+function isCellOccupied(gx,gy){return GameState.towers.some(t=>t.x===gx&&t.y===gy)}
+function nearestSlot(x,y){
+  let best=null,bestD=Infinity;
+  for(const s of GameState.buildSlots){const d=Math.hypot(s.x-x,s.y-y);if(d<bestD){bestD=d;best=s}}
+  return bestD<=BUILD_SNAP_MAX_DIST?best:null;
+}
+function isValidPlacement(gx,gy,type){const def=TOWER_DEFS[type];if(!def||GameState.gold<def.cost)return false;if(isCellOccupied(gx,gy))return false;return true}
+function showBuildGrid(){const s=GameState.scene;if(!s?.slotGraphics)return;const g=s.slotGraphics;g.clear();GameState.buildSlots.forEach(slot=>{if(isCellOccupied(slot.x,slot.y))return;g.fillStyle(0xf1d38b,.32);g.fillCircle(slot.x,slot.y,6);g.lineStyle(2,0xf1d38b,.48);g.strokeCircle(slot.x,slot.y,12)})}
+function hideBuildGrid(){GameState.scene?.slotGraphics?.clear()}
+
+function drawPlacementPreview(x,y){
+  const s=GameState.scene;if(!s?.previewGraphics)return;const g=s.previewGraphics;g.clear();
+  if(!GameState.selectedTower||y>GAME_HEIGHT)return;
+  GameState.placementX=x;GameState.placementY=y;
+  const d=TOWER_DEFS[GameState.selectedTower],slot=nearestSlot(x,y);
+  if(!slot){g.fillStyle(0xd34d46,.18);g.fillCircle(x,y,18);g.lineStyle(2,0xd34d46,.7);g.strokeCircle(x,y,18);return}
+  const valid=isValidPlacement(slot.x,slot.y,GameState.selectedTower),col=valid?0x8fb56b:0xd34d46;
+  g.fillStyle(col,.08);g.fillCircle(slot.x,slot.y,d.range);
+  g.lineStyle(2,col,.65);g.strokeCircle(slot.x,slot.y,d.range);
+  g.lineStyle(1,0xffffff,.2);g.strokeCircle(slot.x,slot.y,d.range-5);
+  g.lineStyle(2,col,.9);g.strokeRect(slot.x-18,slot.y-18,36,36);
+  g.fillStyle(col,.22);g.fillCircle(slot.x,slot.y,18);
+  g.lineStyle(2,col,.95);g.strokeCircle(slot.x,slot.y,18);
+  // Cruz de colocación visible en móvil mientras se arrastra.
+  g.lineStyle(2,col,.9);g.lineBetween(slot.x-8,slot.y,slot.x+8,slot.y);g.lineBetween(slot.x,slot.y-8,slot.x,slot.y+8);
+}
+function clearPlacementPreview(){GameState.scene?.previewGraphics?.clear();GameState.placementDragging=false;GameState.placementPointerId=null}
+function selectPlacedTower(tower){GameState.selectedTower=null;document.querySelectorAll('#buildButtons .tower-btn').forEach(b=>b.classList.remove('selected'));hideBuildGrid();GameState.selectedPlacedTower=tower;showTowerPanel(tower);highlightTower(tower,true)}
 function deselectPlacedTower(){if(GameState.selectedPlacedTower)highlightTower(GameState.selectedPlacedTower,false);GameState.selectedPlacedTower=null;hideTowerPanel()}
 function highlightTower(t,on){if(!t)return;t.visual.setScale(on?1.12:1);if(t.range)t.range.setVisible(on);if(on){const s=GameState.scene;const pulse=s.add.circle(t.x,t.y,22,towerColor(t.type),0).setStrokeStyle(2,towerColor(t.type),.6).setDepth(t.y+45);t.selectionPulse=pulse;s.tweens.add({targets:pulse,scale:1.35,alpha:.05,duration:650,yoyo:true,repeat:-1})}else if(t.selectionPulse){t.selectionPulse.destroy();t.selectionPulse=null}}
 function towerColor(type){return TOWER_DEFS[type].color}
 function upgradeTower(t){if(t.level>=MAX_TOWER_LEVEL)return;const cost=getUpgradeCost(t.type,t.level);if(GameState.gold<cost)return;GameState.gold-=cost;t.invested+=cost;t.level++;updateHUD();updateLevelPips(t);refreshTowerPanel(t);const s=GameState.scene;const ring=s.add.circle(t.x,t.y,18,0xe7bd5b,.22).setDepth(t.y+50);s.tweens.add({targets:ring,scale:2.4,alpha:0,duration:400,onComplete:()=>ring.destroy()});const flash=s.add.circle(t.x,t.y,6,0xffffff,.65).setDepth(t.y+51);s.tweens.add({targets:flash,scale:4,alpha:0,duration:260,onComplete:()=>flash.destroy()});}
-function sellTower(t){const refund=Math.round(t.invested*SELL_REFUND_RATIO);GameState.gold+=refund;updateHUD();t.visual.destroy();t.range.destroy();t.pips?.destroy();t.selectionPulse?.destroy();GameState.towers=GameState.towers.filter(x=>x!==t);deselectPlacedTower()}
-function placeTower(x,y){if(!GameState.selectedTower||!isValidPlacement(x,y,GameState.selectedTower))return;const type=GameState.selectedTower,d=TOWER_DEFS[type],s=GameState.scene;GameState.gold-=d.cost;updateHUD();const visual=createTowerVisual(s,x,y,type,d.color);const range=s.add.circle(x,y,d.range,0xffffff,0).setStrokeStyle(2,d.color,.28).setDepth(y+10).setVisible(false);const tower={x,y,type,lastShot:0,visual,range,level:1,invested:d.cost};GameState.towers.push(tower);updateLevelPips(tower);const dust=s.add.circle(x,y+9,6,0xc2a36d,.28).setDepth(y+5);s.tweens.add({targets:dust,scaleX:3,scaleY:.5,alpha:0,duration:350,onComplete:()=>dust.destroy()});}
+function sellTower(t){const refund=Math.round(t.invested*SELL_REFUND_RATIO);GameState.gold+=refund;updateHUD();t.visual.destroy();t.range.destroy();t.pips?.destroy();t.selectionPulse?.destroy();GameState.towers=GameState.towers.filter(x=>x!==t);deselectPlacedTower();if(GameState.selectedTower)showBuildGrid()}
+function placeTower(x,y){
+  if(!GameState.selectedTower)return;
+  const slot=nearestSlot(x,y);
+  if(!slot||!isValidPlacement(slot.x,slot.y,GameState.selectedTower))return;
+  const type=GameState.selectedTower,d=TOWER_DEFS[type],s=GameState.scene,{x:tx,y:ty}=slot;
+  GameState.gold-=d.cost;updateHUD();
+  const visual=createTowerVisual(s,tx,ty,type,d.color);
+  const range=s.add.circle(tx,ty,d.range,0xffffff,0).setStrokeStyle(2,d.color,.28).setDepth(ty+10).setVisible(false);
+  const tower={x:tx,y:ty,type,lastShot:0,visual,range,level:1,invested:d.cost};
+  GameState.towers.push(tower);updateLevelPips(tower);
+  const dust=s.add.circle(tx,ty+9,6,0xc2a36d,.28).setDepth(ty+5);
+  s.tweens.add({targets:dust,scaleX:3,scaleY:.5,alpha:0,duration:350,onComplete:()=>dust.destroy()});
+  showBuildGrid();
+}
 function spawnProjectileTrail(s,x,y,color){const p=s.add.circle(x,y,2.5,color,.5).setDepth(28);s.tweens.add({targets:p,scale:0,alpha:0,duration:180,onComplete:()=>p.destroy()});return p}
 function shootAt(tower,enemy){const s=GameState.scene,d=getEffectiveStats(tower),tx=enemy.x,ty=enemy.y,dist=Math.hypot(tx-tower.x,ty-tower.y),duration=Math.max(100,dist/(d.area?260:520)*1000);let proj;
  // Ataque: retroceso y retorno suave de la torre

@@ -8,10 +8,45 @@ class MainScene extends Phaser.Scene {
     this.setupPixelTextures();
     this.setupCharacterAnims();
     this.drawTerrain(); this.drawDecorations(); this.drawPath(); this.drawCastle();
+    GameState.buildSlots=computeBuildSlots();
+    this.slotGraphics=this.add.graphics().setDepth(7);
     this.previewGraphics=this.add.graphics().setDepth(8);
     this.addAmbientParticles();
-    this.input.on('pointerdown',p=>{if(p.y>GAME_HEIGHT)return;if(GameState.selectedTower){placeTower(p.x,p.y);drawPlacementPreview(p.x,p.y);return}const t=findTowerAt(p.x,p.y);t?selectPlacedTower(t):deselectPlacedTower()});
-    this.input.on('pointermove',p=>drawPlacementPreview(p.x,p.y));
+    // Controles táctiles y mouse. En móvil la torre se puede ARRastrar:
+    // tocar el mapa inicia el fantasma, mover lo desplaza y soltar construye.
+    // Usamos worldX/worldY para que funcione con Phaser.Scale.FIT en cualquier pantalla.
+    this.input.on('pointerdown',p=>{
+      const x=Phaser.Math.Clamp(p.worldX ?? p.x,0,GAME_WIDTH);
+      const y=Phaser.Math.Clamp(p.worldY ?? p.y,0,GAME_HEIGHT);
+      if(GameState.selectedTower){
+        GameState.placementDragging=true;
+        GameState.placementPointerId=p.id;
+        drawPlacementPreview(x,y);
+        return;
+      }
+      const t=findTowerAt(x,y);
+      t?selectPlacedTower(t):deselectPlacedTower();
+    });
+    this.input.on('pointermove',p=>{
+      if(!GameState.selectedTower || !GameState.placementDragging)return;
+      if(GameState.placementPointerId!==null && p.id!==GameState.placementPointerId)return;
+      const x=Phaser.Math.Clamp(p.worldX ?? p.x,0,GAME_WIDTH);
+      const y=Phaser.Math.Clamp(p.worldY ?? p.y,0,GAME_HEIGHT);
+      drawPlacementPreview(x,y);
+    });
+    this.input.on('pointerup',p=>{
+      if(!GameState.selectedTower || !GameState.placementDragging)return;
+      if(GameState.placementPointerId!==null && p.id!==GameState.placementPointerId)return;
+      const x=Phaser.Math.Clamp(p.worldX ?? p.x,0,GAME_WIDTH);
+      const y=Phaser.Math.Clamp(p.worldY ?? p.y,0,GAME_HEIGHT);
+      const slot=nearestSlot(x,y);
+      if(slot && isValidPlacement(slot.x,slot.y,GameState.selectedTower)) placeTower(slot.x,slot.y);
+      clearPlacementPreview();
+      if(GameState.selectedTower)showBuildGrid();
+    });
+    this.input.on('pointerout',p=>{
+      if(GameState.selectedTower && GameState.placementDragging)drawPlacementPreview(p.worldX ?? p.x,p.worldY ?? p.y);
+    });
     updateHUD();
     this.scene.pause();
   }

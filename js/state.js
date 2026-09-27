@@ -17,6 +17,11 @@ const GameState = {
   speedMultiplier: 1,
   towers: [],
   enemies: [],
+  buildSlots: [],
+  placementDragging: false,
+  placementPointerId: null,
+  placementX: 0,
+  placementY: 0,
 };
 
 function resetState() {
