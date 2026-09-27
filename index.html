@@ -3,48 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Defensa del Castillo</title>
+<title>Defensa del Castillo — Edición 2D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=MedievalSharp&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
 </head>
 <body>
 <div id="wrap">
-  <div id="topbar">
-    <span>🪙 <b id="goldTxt">150</b></span>
-    <span>❤️ <b id="lifeTxt">20</b></span>
-    <span>⚔️ Asalto <b id="waveTxt">0</b></span>
-    <span id="bossTag" style="display:none;">👑 ¡Jefe en camino!</span>
-    <div id="speedControls">
-      <button id="pauseBtn" class="iconBtn" title="Pausa">⏸️</button>
-      <button id="speedBtn" class="iconBtn" title="Velocidad x2">⏩</button>
+  <header id="topbar">
+    <div class="brand"><span class="brand-mark">⚔</span><div><strong>DEFENSA DEL CASTILLO</strong><small>Las Tierras del Eclipse</small></div></div>
+    <div class="stats">
+      <div class="stat gold"><span class="stat-icon">✦</span><div><small>ORO</small><b id="goldTxt">150</b></div></div>
+      <div class="stat life"><span class="stat-icon">♥</span><div><small>VIDA</small><b id="lifeTxt">20</b></div></div>
+      <div class="stat wave"><span class="stat-icon">⚔</span><div><small>OLEADA</small><b id="waveTxt">0</b></div></div>
     </div>
-  </div>
-  <div id="gameHost">
-    <div id="pauseOverlay">⏸ En pausa</div>
-    <div id="msg"><div id="msgTitle"></div><button id="restartBtn">Reiniciar</button></div>
-  </div>
-  <div id="bottombar">
+    <div id="bossTag"><span>♛</span> JEFE EN CAMINO</div>
+    <div id="speedControls">
+      <button id="pauseBtn" class="iconBtn" title="Pausa">Ⅱ</button>
+      <button id="speedBtn" class="iconBtn" title="Velocidad x2">»</button>
+    </div>
+  </header>
+
+  <main id="gameHost">
+    <div class="map-vignette"></div>
+    <div id="pauseOverlay"><div><span>Ⅱ</span><strong>PAUSA</strong><small>El reino espera tu regreso</small></div></div>
+    <div id="msg"><div class="result-card"><div id="msgCrest">♛</div><div id="msgTitle"></div><p id="msgSubtitle"></p><button id="restartBtn">JUGAR DE NUEVO</button></div></div>
+  </main>
+
+  <footer id="bottombar">
     <div id="buildButtons">
-      <div class="btn" id="towerBasic" data-tower="basic">🏹 Arqueros<small>50</small></div>
-      <div class="btn" id="towerSlow" data-tower="slow">🧙 Hechicero<small>75</small></div>
-      <div class="btn" id="towerArea" data-tower="area">🪨 Catapulta<small>110</small></div>
-      <div class="btn" id="waveBtn">⚔️ ¡Que ataquen!</div>
+      <button class="tower-btn" id="towerBasic" data-tower="basic"><span class="tower-icon archer">♜</span><span><b>ARQUEROS</b><small>50 ✦</small></span></button>
+      <button class="tower-btn" id="towerSlow" data-tower="slow"><span class="tower-icon wizard">✧</span><span><b>HECHICERO</b><small>75 ✦</small></span></button>
+      <button class="tower-btn" id="towerArea" data-tower="area"><span class="tower-icon catapult">⚒</span><span><b>CATAPULTA</b><small>110 ✦</small></span></button>
+      <button class="wave-btn" id="waveBtn"><span>⚔</span><b>INICIAR OLEADA</b><small>Prepárate para el ataque</small></button>
     </div>
     <div id="towerPanel">
-      <div id="towerPanelInfo"></div>
+      <div class="selected-tower-head"><span id="panelTowerIcon">♜</span><div><b id="panelTowerName">Torre</b><small id="towerPanelInfo"></small></div></div>
+      <div class="panel-stats" id="panelStats"></div>
       <div id="towerPanelActions">
-        <div class="btn" id="upgradeBtn">⬆️ Mejorar<small id="upgradeCost"></small></div>
-        <div class="btn" id="sellBtn">💰 Vender<small id="sellValue"></small></div>
-        <div class="btn" id="closeTowerPanel">✖️ Cerrar</div>
+        <button class="panel-btn upgrade" id="upgradeBtn"><b>MEJORAR</b><small id="upgradeCost"></small></button>
+        <button class="panel-btn sell" id="sellBtn"><b>VENDER</b><small id="sellValue"></small></button>
+        <button class="panel-btn close" id="closeTowerPanel">×</button>
       </div>
     </div>
-  </div>
+  </footer>
 </div>
-
-<!-- Módulos del juego, en orden de dependencia -->
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
 <script src="js/ui.js"></script>
