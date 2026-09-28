@@ -1,21 +1,20 @@
 function distToPath(px,py){let min=Infinity;for(let i=0;i<PATH_POINTS.length-1;i++){const a=PATH_POINTS[i],b=PATH_POINTS[i+1],dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;let t=l2?((px-a.x)*dx+(py-a.y)*dy)/l2:0;t=Math.max(0,Math.min(1,t));min=Math.min(min,Math.hypot(px-(a.x+t*dx),py-(a.y+t*dy)))}return min}
 function createEnemyVisual(scene,x,y,r,key,color){
-  // Personajes en sprite pixel-art (0x72 Dungeon Tileset II) con animación de caminata real.
+  // Máquinas de asedio del Kenney Castle Kit (imagen fija con balanceo al avanzar).
   const c=scene.add.container(x,y).setDepth(y+15);
   const shadow=scene.add.ellipse(0,r*1.12,r*2.15,r*.48,0x000000,.38); c.add(shadow); c.shadow=shadow;
 
   const isBoss=key==='boss';
   const def=ENEMY_SPRITE_DEFS[key]||ENEMY_SPRITE_DEFS.goblin;
-  const sprite=scene.add.sprite(0,-r*.35,`${def.tex}_run_anim_f0`);
-  sprite.setScale(def.scale*(isBoss?1.35:1));
-  sprite.play(`${def.tex}_run`);
+  const sd=SPRITES[def.tex];
+  const sprite=scene.add.image(0,r*.85,def.tex).setOrigin(sd.ox,sd.oy);
+  sprite.setScale(SPRITE_SCALE*def.scale*(isBoss?1.35:1));
   c.add(sprite); c.charSprite=sprite;
 
   if(isBoss){
-    // Rey Ogro: aura + tinte dorado-rojizo para distinguirlo del ogro normal
+    // Jefe: aura + tinte dorado para distinguirlo (el trabuquete ya lleva sus propias banderas)
     sprite.setTint(0xffcf9e);
     const aura=scene.add.circle(0,-r*.1,r*1.5,0xe7bd5b,.10).setDepth(-1); c.addAt(aura,1); c.aura=aura;
-    const banner=scene.add.graphics(); c.add(banner); banner.fillStyle(0x2c1b15,1); banner.fillRect(-r*1.5,-r*1.7,r*.10,r*1.9); banner.fillStyle(0x9d3036,1); banner.fillTriangle(-r*1.45,-r*1.64,-r*.85,-r*1.42,-r*1.45,-r*1.06);
   }
 
   c.baseY=y; c.bobSeed=Math.random()*6.28; c.animClock=Math.random()*100;
@@ -31,8 +30,8 @@ function bossDeathEffect(s,x,y){const ring=s.add.circle(x,y,18,0xe7bd5b,.15).set
 function killEnemyOffPath(e){e.dead=true;e.sprite.destroy();e.bar.destroy();e.barBg.destroy()}
 function updateEnemies(time,delta){for(const e of GameState.enemies){if(e.dead)continue;const spd=(e.slowUntil>time?e.baseSpeed*SLOW_FACTOR:e.baseSpeed)*delta/1000,wp=PATH_POINTS[e.wpIndex+1];if(!wp){GameState.lives--;updateHUD();GameState.scene.cameras.main.shake(100,.004);killEnemyOffPath(e);if(GameState.lives<=0)showGameOver(false);continue}const dx=wp.x-e.x,dy=wp.y-e.y,d=Math.hypot(dx,dy);if(d<4)e.wpIndex++;else{e.x+=dx/d*spd;e.y+=dy/d*spd}const moving=d>=4;const bob=Math.sin(time/145+e.bobSeed)*(moving?(e.isBoss?1.2:1.8):.5);e.sprite.setPosition(e.x,e.y+bob);e.sprite.setDepth(e.y+15);if(e.sprite.shadow)e.sprite.shadow.setY(e.radius*.9-bob);if(e.isBoss&&e.sprite.aura)e.sprite.aura.setAlpha(.08+.04*Math.sin(time/180));
   // Voltea el sprite según la dirección de avance (el arte mira hacia la derecha por defecto)
-  if(e.sprite.charSprite&&Math.abs(dx)>0.5)e.sprite.charSprite.setFlipX(dx<0);
+  if(e.sprite.charSprite){if(Math.abs(dx)>0.5)e.sprite.charSprite.setFlipX(dx<0);e.sprite.charSprite.setAngle(moving?Math.sin(time/(e.isBoss?210:130)+e.bobSeed)*(e.isBoss?1.6:2.6):0)}
   e.bar.setPosition(e.x,e.y-e.radius-9+bob*.4);e.barBg.setPosition(e.x,e.y-e.radius-9+bob*.4);const ratio=Math.max(0,e.hp/e.maxHp);e.bar.width=ratio*(e.radius*2);e.bar.setFillStyle(ratio<.3?0xd84d50:ratio<.6?0xe1b64e:0x7fbd59)}GameState.enemies=GameState.enemies.filter(e=>!e.dead)}
-function startWave(){if(GameState.waveActive)return;GameState.wave++;GameState.waveActive=true;GameState.spawning=true;const boss=GameState.wave%BOSS_WAVE_INTERVAL===0;toggleBossTag(boss);showWaveBanner(boss?`♛ OLEADA ${GameState.wave} · REY OGRO`:`⚔ OLEADA ${GameState.wave}`);updateHUD();const count=4+GameState.wave*2;let spawned=0;GameState.scene.time.addEvent({delay:500,repeat:count-1,callback:()=>{spawned++;spawnEnemy(GameState.wave>1&&Math.random()<.3,GameState.wave>2&&Math.random()<.25);if(spawned>=count){if(boss)GameState.scene.time.delayedCall(900,()=>{spawnBoss();GameState.spawning=false});else GameState.spawning=false}}})}
+function startWave(){if(GameState.waveActive)return;GameState.wave++;GameState.waveActive=true;GameState.spawning=true;const boss=GameState.wave%BOSS_WAVE_INTERVAL===0;toggleBossTag(boss);showWaveBanner(boss?`♛ OLEADA ${GameState.wave} · TRABUQUETE REAL`:`⚔ OLEADA ${GameState.wave}`);updateHUD();const count=4+GameState.wave*2;let spawned=0;GameState.scene.time.addEvent({delay:500,repeat:count-1,callback:()=>{spawned++;spawnEnemy(GameState.wave>1&&Math.random()<.3,GameState.wave>2&&Math.random()<.25);if(spawned>=count){if(boss)GameState.scene.time.delayedCall(900,()=>{spawnBoss();GameState.spawning=false});else GameState.spawning=false}}})}
 function checkWaveComplete(){if(GameState.waveActive&&!GameState.spawning&&GameState.enemies.length===0){GameState.waveActive=false;GameState.gold+=25+GameState.wave*3;toggleBossTag(false);updateHUD();showRewardToast(`+${25+GameState.wave*3} oro · Oleada superada`)}}
 function showRewardToast(text){const s=GameState.scene,t=s.add.text(400,105,text,{fontFamily:'Cinzel,serif',fontSize:'11px',color:'#f0d994',backgroundColor:'#1b120ddd',padding:{left:10,right:10,top:6,bottom:6}}).setOrigin(.5).setDepth(30).setAlpha(0);s.tweens.add({targets:t,alpha:1,y:92,duration:220,onComplete:()=>s.tweens.add({targets:t,alpha:0,y:80,delay:700,duration:300,onComplete:()=>t.destroy()})})}

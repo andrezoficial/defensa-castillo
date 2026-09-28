@@ -1,19 +1,21 @@
 function createTowerVisual(scene,x,y,type,color){
- const c=scene.add.container(x,y).setDepth(y+20);c.add(scene.add.ellipse(0,16,38,13,0x000000,.25));
- const ring=scene.add.circle(0,4,18,0x40382f).setStrokeStyle(2,0x1e1b18);c.add(ring);c.ring=ring;
+ // Kenney Castle Kit: torres y catapulta renderizadas a PNG. El punto de apoyo está en (0,GROUND).
+ const GROUND=14;
+ const c=scene.add.container(x,y).setDepth(y+20);c.add(scene.add.ellipse(0,GROUND+3,32,11,0x000000,.32));
+ const put=key=>{const d=SPRITES[key];const img=scene.add.image(0,GROUND,key).setOrigin(d.ox,d.oy).setScale(SPRITE_SCALE);c.add(img);return img};
  if(type==='basic'){
-  c.add(scene.add.rectangle(0,0,24,27,0x73583b).setStrokeStyle(2,0x332416));c.add(scene.add.triangle(0,-22,-16,9,16,9,0,-13,0x823a32).setStrokeStyle(2,0x332416));c.add(scene.add.rectangle(0,-1,12,9,0x30251c));
-  const archer=scene.add.sprite(0,-6,'elf_m_idle_anim_f0').setScale(1.7);archer.play('elf_m_idle');c.add(archer);c.archer=archer;
+  c.body=put('tower_archer');
  }else if(type==='slow'){
-  c.add(scene.add.polygon(0,-5,[-16,14,0,-29,16,14],0x44395f).setStrokeStyle(2,0x21192d));
-  const wizard=scene.add.sprite(0,-8,'wizzard_m_idle_anim_f0').setScale(1.7);wizard.play('wizzard_m_idle');c.add(wizard);c.wizard=wizard;
-  const orb=scene.add.circle(0,-27,5,color,.55).setStrokeStyle(2,0xc4eaff,.7);c.add(orb);c.orb=orb;scene.tweens.add({targets:orb,scale:1.35,alpha:.2,duration:750,yoyo:true,repeat:-1});
+  c.body=put('tower_wizard');
+  // Orbe arcano sobre el tejado de la torre del hechicero
+  const halo=scene.add.circle(0,-46,9,color,.18);c.add(halo);scene.tweens.add({targets:halo,alpha:.05,scale:1.5,duration:750,yoyo:true,repeat:-1});
+  const orb=scene.add.circle(0,-46,3.5,color,.85).setStrokeStyle(1.5,0xc4eaff,.9);c.add(orb);c.orb=orb;scene.tweens.add({targets:orb,scale:1.3,alpha:.5,duration:750,yoyo:true,repeat:-1});
  }else{
-  c.add(scene.add.circle(-12,9,8,0x2a2119).setStrokeStyle(2,0x120e0b));c.add(scene.add.circle(12,9,8,0x2a2119).setStrokeStyle(2,0x120e0b));c.add(scene.add.rectangle(0,3,29,10,0x654322).setStrokeStyle(2,0x2e1b10));const arm=scene.add.rectangle(5,-8,5,29,0x9a6a32).setOrigin(.5,1).setRotation(-.42);c.add(arm);c.arm=arm;c.add(scene.add.circle(11,-17,6,0x80623d));
+  c.body=put('tower_catapult');
  }
- c.baseScale=1; c.setScale(.8);scene.tweens.add({targets:c,scale:.1+1,duration:260,ease:'Back.Out'});scene.tweens.add({targets:c,y:y-2,duration:850,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});return c;
+ c.baseScale=1; c.setScale(.8);scene.tweens.add({targets:c,scale:1,duration:260,ease:'Back.Out'});return c;
 }
-function updateLevelPips(tower){if(tower.pips)tower.pips.destroy();const s=GameState.scene,g=s.add.graphics().setDepth(tower.y+40);const sx=tower.x-(tower.level-1)*5;for(let i=0;i<tower.level;i++){g.fillStyle(0xe7bd5b,1);g.fillCircle(sx+i*10,tower.y-39,3);g.lineStyle(1,0x5d411f,1);g.strokeCircle(sx+i*10,tower.y-39,3)}tower.pips=g}
+function updateLevelPips(tower){if(tower.pips)tower.pips.destroy();const s=GameState.scene,g=s.add.graphics().setDepth(tower.y+40);const sx=tower.x-(tower.level-1)*5;for(let i=0;i<tower.level;i++){g.fillStyle(0xe7bd5b,1);g.fillCircle(sx+i*10,tower.y+27,3);g.lineStyle(1,0x5d411f,1);g.strokeCircle(sx+i*10,tower.y+27,3)}tower.pips=g}
 function getEffectiveStats(tower){return {...TOWER_DEFS[tower.type],...getTowerStats(tower.type,tower.level)}}
 function findTowerAt(x,y){for(const t of GameState.towers)if(Math.hypot(t.x-x,t.y-y)<26)return t;return null}
 

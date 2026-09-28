@@ -37,10 +37,26 @@ Cada aspecto del juego vive en su propio archivo: para agregar una torre o un en
 - **Temática medieval**: paleta de piedra/madera/pergamino, tipografía Cinzel/MedievalSharp, camino de tierra, castillo con torreones y antorchas parpadeantes.
 - **3 torres**: Arqueros (daño directo), Hechicero (ralentiza), Catapulta (daño en área).
 - **Mejora y venta de torres**: toca una torre colocada para subirla de nivel (hasta nivel 3) o venderla por parte de lo invertido.
-- **Jefes cada 5 oleadas**: el Rey Ogro tiene mucha vida, es inmune a la ralentización e invoca refuerzos al bajar de la mitad de su vida.
+- **Jefes cada 5 oleadas**: el Trabuquete Real tiene mucha vida, es inmune a la ralentización e invoca refuerzos al bajar de la mitad de su vida.
 - **Vista previa de rango** al elegir dónde colocar una torre (verde/rojo según sea válido).
 - **HUD animado**: el oro y la vida muestran un `+N`/`-N` flotante al cambiar.
 - **Pausa** y **velocidad x2** para agilizar oleadas lentas.
+
+## Arte
+
+Los sprites son modelos 3D del [Castle Kit de Kenney](https://kenney.nl/assets/castle-kit) (CC0) renderizados a PNG (`assets/kenney/`, a 2x de resolución):
+
+| Uso en el juego | Modelo |
+|---|---|
+| Torre de Arqueros | torre cuadrada (base + ventanas + almenas + bandera) |
+| Torre del Hechicero | torre hexagonal con tejado azul |
+| Catapulta | `siege-catapult` |
+| Enemigo básico | `siege-ram` (ariete) |
+| Enemigo rápido | `siege-ballista` |
+| Enemigo acorazado | `siege-tower` |
+| Jefe | `siege-trebuchet` |
+
+Los sprites se registran en `SPRITES` / `ENEMY_SPRITE_DEFS` (`js/config.js`).
 
 ## Licencia
 

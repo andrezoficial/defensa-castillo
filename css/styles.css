@@ -19,3 +19,35 @@ button{touch-action:manipulation;-webkit-user-select:none;user-select:none}
 /* Colocación táctil: evita gestos del navegador mientras se arrastra una torre. */
 #gameHost canvas{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 @media(max-width:760px){#bottombar{padding-bottom:calc(10px + env(safe-area-inset-bottom));}.tower-btn,.wave-btn{min-height:54px;}.tower-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}.tower-btn.selected{box-shadow:0 0 18px #e7bd5b66,inset 0 1px #fff3;}.wave-btn{-webkit-tap-highlight-color:transparent;}}
+
+/* ===== FASE 7 · PULIDO VISUAL ===== */
+:root{--gold-line:linear-gradient(90deg,transparent,#e7bd5b99,transparent)}
+#topbar,#bottombar{position:relative}
+#topbar:after,#bottombar:before{content:"";position:absolute;left:0;right:0;height:1px;background:var(--gold-line);pointer-events:none}
+#topbar:after{bottom:-1px}#bottombar:before{top:-1px}
+#wrap{background:radial-gradient(ellipse at 50% -10%,#54381f 0,#1c1410 50%,#0c0907 100%)}
+.stat{border-color:#8a6a38;background:linear-gradient(180deg,#33231a,#170f0b);box-shadow:inset 0 1px #ffffff18,inset 0 -8px 12px #0004,0 2px 6px #0006}
+.stat b{font-size:16px;text-shadow:0 1px 0 #000a;font-variant-numeric:tabular-nums}
+.gold .stat-icon{text-shadow:0 0 10px #e7bd5b88}.life .stat-icon{text-shadow:0 0 10px #d45a5588}
+.stat{position:relative}
+.brand-mark{background:radial-gradient(circle at 35% 30%,#3a2717,#120b08);box-shadow:inset 0 0 12px #000,0 0 14px #e7bd5b1f}
+.tower-btn,.wave-btn,.panel-btn,.iconBtn{box-shadow:inset 0 1px #ffffff26,inset 0 -3px 6px #0005,0 4px 10px #0008}
+.tower-btn:active,.wave-btn:active,.panel-btn:active,.iconBtn:active{transform:translateY(1px) scale(.98)}
+.tower-btn.selected{background:linear-gradient(180deg,#6a4626,#3a2314);transform:translateY(-3px);border-color:#f1d277}
+.tower-btn{position:relative}
+.tower-btn.poor{opacity:.5;filter:saturate(.5)}
+.tower-btn.poor small{color:#d6786f}
+.tower-icon{background:radial-gradient(circle at 35% 30%,#2e2016,#120c08);box-shadow:inset 0 0 8px #000}
+.wave-btn{background:linear-gradient(180deg,#8a3a2c,#4a1c15);border-color:#d0805a}
+.wave-btn:not(.ready){filter:saturate(.45) brightness(.8)}
+.combat-status,.enemy-counter{background:#140d0acc;border-color:#7d603a;box-shadow:0 4px 12px #0007,inset 0 1px #fff1}
+.map-vignette{box-shadow:inset 0 0 110px #050a06cc,inset 0 0 22px #000a}
+.start-card{background:linear-gradient(180deg,#42291bf0,#120c09f2);border-color:#c79c50;box-shadow:0 30px 100px #000e,0 0 60px #e7bd5b14,inset 0 1px #fff3}
+.start-card h1{background:linear-gradient(180deg,#fff0b8,#d7a54f 70%,#a8752f);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 4px 10px #000)}
+.start-card h1 span{-webkit-text-fill-color:transparent}
+.crest-large{animation:crestGlow 3.2s ease-in-out infinite}
+@keyframes crestGlow{50%{box-shadow:0 0 50px #e7bd5b44,inset 0 0 20px #000}}
+.primary-action{background:linear-gradient(180deg,#9a6a35,#5a361b)}
+.result-card{border-color:#d3a653;box-shadow:0 25px 80px #000c,0 0 50px #e7bd5b18}
+button:focus-visible{outline:2px solid #f1d277;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

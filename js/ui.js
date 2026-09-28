@@ -27,6 +27,7 @@ function updateCombatUI(){
     progress.style.width=`${(step/BOSS_WAVE_INTERVAL)*100}%`;
     progressText.textContent=`${step} / ${BOSS_WAVE_INTERVAL}`;
   }
+  document.querySelectorAll('#buildButtons .tower-btn').forEach(b=>{const d=TOWER_DEFS[b.dataset.tower];if(d)b.classList.toggle('poor',GameState.gold<d.cost)});
   const wb=document.getElementById('waveBtn'), hint=document.getElementById('waveBtnHint');
   if(wb){wb.classList.toggle('ready',!GameState.waveActive);if(hint)hint.textContent=GameState.waveActive?'Oleada en curso':'Prepárate para el ataque'}
 }

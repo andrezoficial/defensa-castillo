@@ -25,45 +25,34 @@ const TOWER_DEFS = {
   area: { name: 'Catapulta', cost: 110, range: 95, rate: 1100, dmg: 14, color: 0x5c3d1f, proj: 0xd97a1f, area: true },
 };
 
-// Nombres/colores de las tropas enemigas, usados con fines temáticos.
+// Nombres/colores de las máquinas de asedio enemigas, usados con fines temáticos.
 const ENEMY_TYPES = {
-  goblin: { name: 'Goblin', color: 0x4caf50 },
-  raider: { name: 'Jinete Veloz', color: 0xd4af37 },
-  ogre: { name: 'Ogro Acorazado', color: 0x6a1b1b },
-  boss: { name: 'Rey Ogro', color: 0x8b0000 },
+  goblin: { name: 'Ariete', color: 0x4caf50 },
+  raider: { name: 'Balista Veloz', color: 0xd4af37 },
+  ogre: { name: 'Torre de Asedio', color: 0x6a1b1b },
+  boss: { name: 'Trabuquete Real', color: 0x8b0000 },
 };
 
-// --- Sprites pixel-art (0x72 Dungeon Tileset II) ---
-// Lista de todos los frames sueltos que hay que precargar en scene.js:preload().
-const SPRITE_FRAME_KEYS = [
-  'goblin_idle_anim_f0','goblin_idle_anim_f1','goblin_idle_anim_f2','goblin_idle_anim_f3',
-  'goblin_run_anim_f0','goblin_run_anim_f1','goblin_run_anim_f2','goblin_run_anim_f3',
-  'chort_idle_anim_f0','chort_idle_anim_f1','chort_idle_anim_f2','chort_idle_anim_f3',
-  'chort_run_anim_f0','chort_run_anim_f1','chort_run_anim_f2','chort_run_anim_f3',
-  'orc_warrior_idle_anim_f0','orc_warrior_idle_anim_f1','orc_warrior_idle_anim_f2','orc_warrior_idle_anim_f3',
-  'orc_warrior_run_anim_f0','orc_warrior_run_anim_f1','orc_warrior_run_anim_f2','orc_warrior_run_anim_f3',
-  'ogre_idle_anim_f0','ogre_idle_anim_f1','ogre_idle_anim_f2','ogre_idle_anim_f3',
-  'ogre_run_anim_f0','ogre_run_anim_f1','ogre_run_anim_f2','ogre_run_anim_f3',
-  'elf_m_idle_anim_f0','elf_m_idle_anim_f1','elf_m_idle_anim_f2','elf_m_idle_anim_f3',
-  'elf_m_run_anim_f0','elf_m_run_anim_f1','elf_m_run_anim_f2','elf_m_run_anim_f3',
-  'wizzard_m_idle_anim_f0','wizzard_m_idle_anim_f1','wizzard_m_idle_anim_f2','wizzard_m_idle_anim_f3',
-  'wizzard_m_run_anim_f0','wizzard_m_run_anim_f1','wizzard_m_run_anim_f2','wizzard_m_run_anim_f3',
-];
-// Texturas base (sin sufijo _idle/_run_anim_fN) para las que hay que generar animaciones.
-const CHARACTER_ANIM_DEFS = {
-  goblin: { frameRate: 7 },
-  chort: { frameRate: 9 },
-  orc_warrior: { frameRate: 6 },
-  ogre: { frameRate: 5 },
-  elf_m: { frameRate: 6 },
-  wizzard_m: { frameRate: 5 },
+// --- Sprites (Kenney Castle Kit, CC0) ---
+// Modelos 3D del kit renderizados a PNG (ver assets/kenney/). Cada imagen está a 2x de resolución
+// y se dibuja con SPRITE_SCALE (0.5) para verse nítida. ox/oy = punto de apoyo en el suelo (0-1).
+const SPRITE_SCALE = 0.5;
+const SPRITES = {
+  tower_archer: { file: 'tower_archer.png', ox: 0.5036, oy: 0.8769 },
+  tower_wizard: { file: 'tower_wizard.png', ox: 0.5047, oy: 0.8728 },
+  tower_catapult: { file: 'tower_catapult.png', ox: 0.517, oy: 0.7154 },
+  enemy_ram: { file: 'enemy_ram.png', ox: 0.5131, oy: 0.7642 },
+  enemy_ballista: { file: 'enemy_ballista.png', ox: 0.4155, oy: 0.8506 },
+  enemy_siegetower: { file: 'enemy_siegetower.png', ox: 0.5103, oy: 0.8443 },
+  enemy_trebuchet: { file: 'enemy_trebuchet.png', ox: 0.5581, oy: 0.8237 },
 };
-// Qué textura y escala usa cada tipo de enemigo (altura base del sprite: 16 o 23 o 36 px).
+// Qué imagen y escala usa cada tipo de enemigo (máquinas de asedio que avanzan hacia el castillo).
+// Todas las imágenes miran hacia la derecha; scene/entities las voltean según la dirección.
 const ENEMY_SPRITE_DEFS = {
-  goblin: { tex: 'goblin', scale: 2.3 },
-  raider: { tex: 'chort', scale: 1.85 },
-  ogre: { tex: 'orc_warrior', scale: 2.35 },
-  boss: { tex: 'ogre', scale: 2.35 },
+  goblin: { tex: 'enemy_ram', scale: 1 },          // Ariete
+  raider: { tex: 'enemy_ballista', scale: 1 },     // Balista (rápida)
+  ogre:   { tex: 'enemy_siegetower', scale: 1.05 },// Torre de asedio (acorazada)
+  boss:   { tex: 'enemy_trebuchet', scale: 1 },    // Trabuquete (jefe)
 };
 
 const INITIAL_GOLD = 150;
