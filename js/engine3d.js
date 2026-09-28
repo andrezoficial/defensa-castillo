@@ -14,7 +14,7 @@ const flat=m=>{m.rotation.x=-Math.PI/2;return m};
 let _s=42;const R=()=>(_s=(_s*1664525+1013904223)%4294967296)/4294967296;
 
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc3d6);scene.fog=new THREE.Fog(0x9fc3d6,750,1600);
-const cam=new THREE.PerspectiveCamera(40,1.6,10,3000);
+const cam=new THREE.PerspectiveCamera(40,1.6,10,5000);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 
 function distToPath(px,py){let min=Infinity;for(let i=0;i<PATH_POINTS.length-1;i++){const a=PATH_POINTS[i],b=PATH_POINTS[i+1],dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;let t=l2?((px-a.x)*dx+(py-a.y)*dy)/l2:0;t=Math.max(0,Math.min(1,t));min=Math.min(min,Math.hypot(px-(a.x+t*dx),py-(a.y+t*dy)))}return min}
@@ -140,8 +140,8 @@ function shootAt(t,e){const d=getEffectiveStats(t),tx=e.x,ty=e.y,dist=Math.hypot
 function updateTowers(time){for(const t of GameState.towers){const st=getEffectiveStats(t);if(time-t.lastShot<st.rate)continue;let target=null,best=Infinity;for(const e of GameState.enemies){if(e.dead)continue;const d=Math.hypot(e.x-t.x,e.y-t.y);if(d<=st.range&&d<best){best=d;target=e}}if(target){t.lastShot=time;shootAt(t,target)}}}
 
 /* ---------- Cámara, entrada y bucle ---------- */
-function fit(){const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const t=Math.tan(cam.fov*Math.PI/360);S.dist=Math.max(440/(t*cam.aspect),270/t)*S.zoom}
-function placeCam(){const el=.96,c=Math.cos(el),d=S.dist,j=()=>(Math.random()-.5)*S.shake;cam.position.set(400+Math.sin(S.az)*c*d+j(),Math.sin(el)*d+j(),255+Math.cos(S.az)*c*d);cam.lookAt(400,0,255);S.shake=S.shake<.05?0:S.shake*.88}
+function fit(){const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=v?-Math.PI/2:0;S.dist=(v?Math.max(300/(t*cam.aspect),420/t):Math.max(440/(t*cam.aspect),270/t))*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600}
+function placeCam(){const el=.96,c=Math.cos(el),d=S.dist,j=()=>(Math.random()-.5)*S.shake;const A=S.baz+S.az;cam.position.set(400+Math.sin(A)*c*d+j(),Math.sin(el)*d+j(),255+Math.cos(A)*c*d);cam.lookAt(400,0,255);S.shake=S.shake<.05?0:S.shake*.88}
 const ray=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();
 function groundAt(e){const r=host.getBoundingClientRect();v2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(v2,cam);return ray.ray.intersectPlane(gp,hit)?{x:Math.min(GAME_WIDTH,Math.max(0,hit.x)),y:Math.min(GAME_HEIGHT,Math.max(0,hit.z))}:null}
 function bindInput(){
