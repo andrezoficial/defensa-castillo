@@ -1,63 +1,16 @@
-# 🏰 Defensa del Castillo
+# 🏰 Defensa del Castillo — Edición 3D
 
-Juego de defensa de torres (*tower defense*) con temática medieval, hecho con [Phaser 3](https://phaser.io/). Sin dependencias de build: HTML + CSS + JS planos.
+Versión 3D del tower defense, hecha con [Three.js](https://threejs.org/) (r128, desde cdnjs). Sin build: HTML + CSS + JS planos.
 
-## Cómo jugarlo
-
-Solo hace falta un servidor estático (por CORS, no basta con abrir `index.html` con doble clic en algunos navegadores):
-
+## Jugar
 ```bash
-# opción rápida con Python
-python3 -m http.server 8000
-# abrir http://localhost:8000
+python3 -m http.server 8000   # abrir http://localhost:8000
 ```
+También funciona en GitHub Pages.
 
-O publícalo con **GitHub Pages**: Settings → Pages → Deploy from branch → `main` / `/(root)`. Al ser HTML estático funciona tal cual.
+## Controles
+Clic/arrastre para construir · clic en torre para mejorar/vender · `1-3` torres · `Espacio` oleada · `P` pausa · `Q/E` girar cámara · rueda del mouse: zoom.
 
 ## Estructura
-
-```
-defensa-castillo/
-├── index.html          # estructura y HUD
-├── css/styles.css       # tema visual (piedra, madera, pergamino)
-└── js/
-    ├── config.js        # mapa, torres, enemigos, reglas de mejora/venta/jefes
-    ├── state.js          # estado mutable de una partida
-    ├── ui.js              # HUD animado, panel de torre, pausa/velocidad
-    ├── entities.js       # enemigos, jefes, refuerzos, partículas
-    ├── towers.js          # colocación, mejora, venta, disparo y proyectiles
-    ├── scene.js           # escena de Phaser (mapa, castillo, antorchas)
-    └── main.js            # arranque
-```
-
-Cada aspecto del juego vive en su propio archivo: para agregar una torre o un enemigo nuevo, alcanza con tocar `config.js` (y `index.html` para el botón, si aplica).
-
-## Características
-
-- **Temática medieval**: paleta de piedra/madera/pergamino, tipografía Cinzel/MedievalSharp, camino de tierra, castillo con torreones y antorchas parpadeantes.
-- **3 torres**: Arqueros (daño directo), Hechicero (ralentiza), Catapulta (daño en área).
-- **Mejora y venta de torres**: toca una torre colocada para subirla de nivel (hasta nivel 3) o venderla por parte de lo invertido.
-- **Jefes cada 5 oleadas**: el Trabuquete Real tiene mucha vida, es inmune a la ralentización e invoca refuerzos al bajar de la mitad de su vida.
-- **Vista previa de rango** al elegir dónde colocar una torre (verde/rojo según sea válido).
-- **HUD animado**: el oro y la vida muestran un `+N`/`-N` flotante al cambiar.
-- **Pausa** y **velocidad x2** para agilizar oleadas lentas.
-
-## Arte
-
-Los sprites son modelos 3D del [Castle Kit de Kenney](https://kenney.nl/assets/castle-kit) (CC0) renderizados a PNG (`assets/kenney/`, a 2x de resolución):
-
-| Uso en el juego | Modelo |
-|---|---|
-| Torre de Arqueros | torre cuadrada (base + ventanas + almenas + bandera) |
-| Torre del Hechicero | torre hexagonal con tejado azul |
-| Catapulta | `siege-catapult` |
-| Enemigo básico | `siege-ram` (ariete) |
-| Enemigo rápido | `siege-ballista` |
-| Enemigo acorazado | `siege-tower` |
-| Jefe | `siege-trebuchet` |
-
-Los sprites se registran en `SPRITES` / `ENEMY_SPRITE_DEFS` (`js/config.js`).
-
-## Licencia
-
-Phaser se carga desde cdnjs bajo su propia licencia (MIT). El resto del código es de uso libre para este proyecto.
+`config.js` (balance, mapa) · `state.js` · `ui.js` (HUD) · `engine3d.js` (mundo 3D, modelos, torres, enemigos, efectos) · `main.js`.
+El mapa conserva las coordenadas 2D (x→X, y→Z), por lo que todo el balance sigue igual. Los modelos GLB (`assets/models/`, aligerados con color por vértice) son: arquero y hechicero sobre sus torres, catapulta, goblin, orco guerrero y orco (también jefe, ×2) y castillo. Cargados con `GLTFLoader`.

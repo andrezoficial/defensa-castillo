@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Defensa del Castillo — Edición 2D</title>
+<title>Defensa del Castillo — Edición 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=MedievalSharp&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -23,7 +24,7 @@
         <button id="startGameBtn" class="primary-action"><span>⚔</span> COMENZAR DEFENSA</button>
         <button id="howToBtn" class="secondary-action">CÓMO JUGAR</button>
       </div>
-      <div class="version-chip">EDICIÓN 2D · FASE 7 · TORRES Y CASTILLO</div>
+      <div class="version-chip">EDICIÓN 3D · FASE 8 · TORRES Y CASTILLO</div>
     </div>
     <div id="howToPanel" class="howto-panel">
       <button id="closeHowTo" class="close-modal">×</button>
@@ -67,7 +68,7 @@
       <button class="tower-btn" id="towerArea" data-tower="area"><span class="tower-icon catapult">⚒</span><span><b>CATAPULTA</b><small>110 ✦</small></span></button>
       <button class="wave-btn" id="waveBtn"><span>⚔</span><b>INICIAR OLEADA</b><small id="waveBtnHint">Prepárate para el ataque</small></button>
     </div>
-    <div class="keyboard-hint">1–3 TORRES · ESPACIO OLEADA · P PAUSA</div>
+    <div class="keyboard-hint">1–3 TORRES · ESPACIO OLEADA · P PAUSA · Q/E CÁMARA · RUEDA ZOOM</div>
     <div id="towerPanel">
       <div class="selected-tower-head"><span id="panelTowerIcon">♜</span><div><b id="panelTowerName">Torre</b><small id="towerPanelInfo"></small></div></div>
       <div class="panel-stats" id="panelStats"></div>
@@ -82,9 +83,7 @@
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/entities.js"></script>
-<script src="js/towers.js"></script>
-<script src="js/scene.js"></script>
+<script src="js/engine3d.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
