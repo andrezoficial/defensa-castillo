@@ -51,3 +51,36 @@ button{touch-action:manipulation;-webkit-user-select:none;user-select:none}
 .result-card{border-color:#d3a653;box-shadow:0 25px 80px #000c,0 0 50px #e7bd5b18}
 button:focus-visible{outline:2px solid #f1d277;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* ===== FASE 9 · CARGA, CÁMARA, SONIDO Y RESULTADO ===== */
+.primary-action:disabled{opacity:.6;cursor:progress;filter:saturate(.55);transform:none}
+.primary-action b{font-weight:800}
+.load-status{min-height:14px;margin-top:14px;font-size:9px;letter-spacing:1.3px;color:#a99570}
+.load-status.error{color:#ff9a86;line-height:1.5;max-width:420px;margin-left:auto;margin-right:auto}
+#retryLoadBtn{margin-top:10px}
+#retryLoadBtn[hidden],#continueBtn[hidden]{display:none}
+#camControls{position:absolute;left:12px;bottom:12px;z-index:6;display:flex;flex-direction:column;gap:6px}
+#camControls .iconBtn{width:36px;height:36px;font-size:17px;opacity:.85;background:linear-gradient(180deg,#4d3320,#28190f)}
+#camControls .iconBtn:hover{opacity:1}
+.combat-status,.enemy-counter{pointer-events:none}
+.iconBtn.off{opacity:.55;text-decoration:line-through}
+.panel-btn.poor{opacity:.55}
+.wave-btn:disabled{cursor:not-allowed}
+.howto-keys{margin:18px 0 0;text-align:center;font-size:10px;letter-spacing:1px;color:#a99570;line-height:1.7}
+.result-actions{display:flex;flex-direction:column;align-items:center;gap:9px}
+#continueBtn{border-color:#f1d277;background:linear-gradient(180deg,#9a6a35,#5a361b)}
+@media(max-width:600px){#camControls{left:7px;bottom:7px;gap:5px}#camControls .iconBtn{width:34px;height:34px}}
+
+/* Móvil: nada debe desbordar la pantalla */
+@media(max-width:600px){
+  #topbar{justify-content:space-between;gap:5px;padding:6px}
+  .brand{display:none}
+  .stat{min-width:0;flex:0 1 auto}
+  #speedControls{gap:5px}
+  #speedControls .iconBtn{width:34px;height:34px}
+  #buildButtons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  #buildButtons .tower-btn{min-width:0;padding:6px;gap:5px}
+  #buildButtons .tower-btn span:last-child{min-width:0;overflow:hidden}
+  #buildButtons .tower-btn span:last-child b{font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  #buildButtons .wave-btn{grid-column:1/-1;min-width:0;min-height:46px}
+}

@@ -4,6 +4,10 @@
 
 const GameState = {
   scene: null,
+  ready: false,        // modelos 3D cargados
+  started: false,      // se pulsó "Comenzar"
+  over: false,         // hay un mensaje de victoria/derrota en pantalla
+  continued: false,    // se eligió seguir tras la victoria (modo sin fin)
   selectedTower: null,
   selectedPlacedTower: null,
   gold: INITIAL_GOLD,
@@ -24,19 +28,5 @@ const GameState = {
   placementY: 0,
 };
 
-function resetState() {
-  GameState.scene = null;
-  GameState.selectedTower = null;
-  GameState.selectedPlacedTower = null;
-  GameState.gold = INITIAL_GOLD;
-  GameState.lives = INITIAL_LIVES;
-  GameState.lastGold = INITIAL_GOLD;
-  GameState.lastLives = INITIAL_LIVES;
-  GameState.wave = 0;
-  GameState.waveActive = false;
-  GameState.spawning = false;
-  GameState.paused = false;
-  GameState.speedMultiplier = 1;
-  GameState.towers = [];
-  GameState.enemies = [];
-}
+// ¿Se puede interactuar con el mapa ahora mismo? (no en el menú, ni en pausa, ni con un mensaje final)
+const canAct = () => GameState.started && !GameState.paused && !GameState.over;
