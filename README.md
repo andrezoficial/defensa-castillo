@@ -185,7 +185,7 @@ El mapa conserva las coordenadas 2D (x→X, y→Z) para que el balance sea senci
 - `assets/models/solani.glb`: jefe Solani animado con el clip real `Idle`. Los estados de ataque, impacto, fase y muerte mantienen el fallback procedural porque este asset solo incluye `Idle`.
 - El resto de personajes conserva los modelos originales y el sistema de fallback de V6.9.
 - Los archivos FBX suministrados se mantienen fuera del runtime: son clips fuente y no se fuerzan sobre un rig incompatible.
-- `assets/source-animations/`: archivos FBX entregados como fuentes de animación (`Standing Idle 03.fbx` y `Standing 2H Magic Attack 01.fbx`). No se asignan automáticamente porque el runtime actual usa GLTFLoader y no se ha verificado compatibilidad de rig.
+- Los FBX fuente no forman parte del build de producción: el runtime usa GLTFLoader y no los carga.
 
 
 ## V6.9.2 — Arquero y hechicero animados
@@ -202,7 +202,7 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 - **Animación en el juego (`js/v69.js`)**: el ataque se acelera para caber entre dos disparos (respeta mejoras, Furia Real y velocidad ×2) y al terminar vuelve solo al reposo. Cada torre empieza el reposo en un punto distinto del clip para que no se muevan sincronizadas.
 - **Clonado de esqueletos (`js/engine3d.js`)**: `cloneModel()` da a cada copia su propio `Skeleton`; `Object3D.clone()` en three r128 comparte el esqueleto del original entre copias.
 - **Service worker**: caché `v6.9.2` para que los navegadores descarguen los modelos nuevos.
-- Los FBX originales están en `assets/source-animations/`.
+- Los modelos 3D se cargan desde `assets/models/`; los jefes pesados se cargan en segundo plano para no bloquear el arranque.
 
 ## V6.9.4 — Jefe dragón y Zombi Bruto
 
@@ -231,3 +231,10 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 - **El juego no cargaba** (se quedaba en «PREPARANDO EL CAMPO…»): el generador aleatorio de `texturedMat()` (V7.6) devolvía valores negativos y `canvas.arc()` lanzaba una excepción por radio negativo. Ahora usa un LCG correcto en [0, 1).
 - **Texturas del suelo y del camino**: `mergeStatic()` fusionaba las mallas sin coordenadas UV, así que la textura se perdía; los materiales con textura ya no se fusionan.
 - Avisos de Three.js: se quitó `roughness` (no existe en `MeshLambertMaterial`) y `colorSpace` (r128 usa `encoding`).
+
+
+## V7.9 — Medieval Village MegaKit
+- Se integró un subconjunto optimizado de assets 3D para decoración del mapa: casas modulares, vallas, carro, cajas y enredaderas.
+- Los modelos y texturas del pack se cargan de forma diferida después del primer frame para no bloquear el inicio.
+- Texturas del kit limitadas a 1024 px máximo para reducir memoria GPU/red.
+- La decoración evita la ruta principal y la zona del castillo; no modifica lógica de combate ni construcción.

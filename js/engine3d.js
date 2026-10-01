@@ -88,6 +88,18 @@ function addBattlefieldProps(){
   pebbleField(15,15,785,485,0x74776f,45,1,.0);
   // Montículos bajos para romper la planitud visual; no interfieren con el plano de selección.
   for(let i=0;i<18;i++){const x=30+R()*740,z=30+R()*430;if(distToPath(x,z)<82)continue;const m=part(scene,'Cylinder',[18+R()*16,3+R()*4,12],0x4b6938,x,2,z);m.scale.y=.45;m.castShadow=true;m.receiveShadow=true}
+
+  // Props 3D del pack adjunto: dos catapultas como ambientación defensiva cerca de la entrada.
+  // Se mantienen fuera del camino para no interferir con enemigos, selección ni construcción.
+  const a=PATH_POINTS[0], b=PATH_POINTS[1], dx=b.x-a.x, dz=b.y-a.y, len=Math.hypot(dx,dz)||1;
+  const nx=-dz/len, nz=dx/len, midX=a.x+dx*.58, midZ=a.y+dz*.58;
+  for(const side of [-1,1]){
+    const g=inst('catapult',30,Math.atan2(dz,dx));
+    g.position.set(midX+nx*side*58,0,midZ+nz*side*58);
+    g.rotation.y += side<0 ? 0.16 : -0.16;
+    g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+    scene.add(g);
+  }
 }
 function buildWorld(){
   S.hemi=new THREE.HemisphereLight(0xd9edff,0x344526,.92);scene.add(S.hemi);
@@ -154,11 +166,85 @@ function buildCastle(){const c=inst('castle',150,-Math.PI/2);c.position.set(775,
 
 /* ---------- Modelos ---------- */
 const MODELS={};window.MODELS=MODELS; // v69.js lee los clips desde window.MODELS (un const global no cuelga de window)
-function loadModels(onProgress){const keys=['archer','wizard','catapult','goblin','zombie','wyvern','raider','ogre','solani','castle'],L=new THREE.GLTFLoader();let n=0;const tick=()=>{n++;if(onProgress)onProgress(n/keys.length)};
-  return Promise.all(keys.map(k=>new Promise((ok,no)=>{
-    if(MODELS[k]){tick();return ok()}
-    const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;tick();ok()};
-    if(d){const b=atob(d),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);L.parse(a.buffer,'',done,no)}else L.load('assets/models/'+k+'.glb',done,undefined,no)})))}
+
+const MAPKIT_MODELS={}; let MAPKIT_READY=Promise.resolve();
+/* Decoración 3D del mapa: carga diferida y limitada para no penalizar el arranque. */
+function loadMapKitKey(k,L){return new Promise((ok)=>{
+  if(MAPKIT_MODELS[k]) return ok(MAPKIT_MODELS[k]);
+  L.load('assets/map-kit/'+k+'.gltf',g=>{MAPKIT_MODELS[k]=g;ok(g)},undefined,e=>{console.warn('MapKit asset omitido:',k,e);ok(null)});
+})}
+function mapProp(k,scale=1,ry=0){
+  const src=MAPKIT_MODELS[k]; if(!src) return null;
+  const g=src.scene.clone(true); g.scale.setScalar(scale); g.rotation.y=ry;
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=true}});
+  return g;
+}
+function addMapHouse(x,z,rot=0,scale=13.5){
+  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot;
+  // Una casa modular compacta: tres muros + fachada con puerta + tejado.
+  const parts=[
+    ['Wall_Plaster_Straight',scale,0,scale*1.02,0],
+    ['Wall_Plaster_Straight',scale,Math.PI,0,scale*1.02],
+    ['Wall_Plaster_Straight',scale,Math.PI/2,-scale*1.02,0],
+    ['Wall_Plaster_Door_Round',scale,Math.PI/2,scale*1.02,0],
+  ];
+  parts.forEach(([k,s,ry,px,pz])=>{const p=mapProp(k,s,ry);if(p){p.position.set(px,0,pz);g.add(p)}});
+  const roof=mapProp('Roof_RoundTiles_6x6',scale*.55,0); if(roof){roof.position.y=scale*3.15;g.add(roof)}
+  // Un pequeño zócalo para que la casa no parezca pegada al terreno.
+  const base=part(g,'Box',[scale*2.35,.9,scale*2.35],0x6a5a45,0,1.0,0);base.castShadow=false;base.receiveShadow=true;
+  scene.add(g); return g;
+}
+function addMapKitScenery(){
+  const id=CURRENT_MAP.id;
+  const candidateMap={
+    // Puntos alejados de la ruta; en mapas muy cerrados priorizamos decoración pequeña.
+    valle:[[740,360,-Math.PI*.12],[740,460,Math.PI*.38],[740,260,Math.PI*.08]],
+    paso:[[380,40,Math.PI*.15],[740,260,-Math.PI*.22],[720,460,Math.PI*.32]],
+    bosque:[[340,40,-Math.PI*.35],[560,320,Math.PI*.6],[40,440,-Math.PI*.08]],
+    fortaleza:[[40,40,Math.PI*.12],[340,40,Math.PI*.55],[40,240,-Math.PI*.22]]
+  };
+  const candidates=candidateMap[id]||candidateMap.valle;
+  const safe=[];
+  for(const c of candidates){
+    if(distToPath(c[0],c[1])>70 && !(c[0]>700 && c[1]<230)) safe.push(c);
+  }
+  // Dos casas como máximo; el resto del pack se usa como ambientación ligera.
+  safe.slice(0,2).forEach((c,i)=>addMapHouse(c[0],c[1],c[2], i?13:13.5));
+  safe.slice(0,2).forEach((c,i)=>{
+    const [x,z,rot]=c, side=i?1:-1;
+    const wagon=mapProp('Prop_Wagon',8.5,rot); if(wagon){wagon.position.set(x+side*46,0,z+35);scene.add(wagon)}
+    const crate1=mapProp('Prop_Crate',8.2,rot*.2); if(crate1){crate1.position.set(x-side*34,0,z-30);scene.add(crate1)}
+    const crate2=mapProp('Prop_Crate',7.2,-rot*.35); if(crate2){crate2.position.set(x-side*28,0,z-22);scene.add(crate2)}
+    for(let j=0;j<3;j++){
+      const fr=mapProp(j===2?'Prop_WoodenFence_Extension1':'Prop_WoodenFence_Single',10.5,rot);
+      if(fr){fr.position.set(x+side*(45+j*19),0,z-side*24);scene.add(fr)}
+    }
+    // Una enredadera por fachada: aporta detalle sin multiplicar geometría.
+    const vine=mapProp('Prop_Vine1',10.5,rot+Math.PI/2); if(vine){vine.position.set(x-side*13,28,z+side*18);scene.add(vine)}
+  });
+}
+function loadMapKit(){
+  const keys=['Prop_Wagon','Prop_Crate','Prop_WoodenFence_Single','Prop_WoodenFence_Extension1','Prop_Vine1','Wall_Plaster_Straight','Wall_Plaster_Door_Round','Roof_RoundTiles_6x6'];
+  const L=new THREE.GLTFLoader();
+  MAPKIT_READY=Promise.all(keys.map(k=>loadMapKitKey(k,L))).then(()=>{addMapKitScenery();return MAPKIT_MODELS}).catch(e=>{console.warn('MapKit no disponible:',e);return MAPKIT_MODELS});
+  return MAPKIT_READY;
+}
+let BOSS_MODELS_READY=Promise.resolve();
+function loadModelKey(k,L){return new Promise((ok,no)=>{
+  if(MODELS[k]) return ok();
+  const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;ok()},fail=e=>no(e);
+  if(d){const b=atob(d),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);L.parse(a.buffer,'',done,fail)}else L.load('assets/models/'+k+'.glb',done,undefined,fail);
+})}
+function loadModels(onProgress){
+  // Carga inicial ligera: no se descargan los jefes de 8-12 MB hasta que hacen falta.
+  const core=['archer','wizard','catapult','goblin','raider','ogre','castle'],boss=['wyvern','solani'];
+  const L=new THREE.GLTFLoader();let n=0;const tick=()=>{n++;if(onProgress)onProgress(n/core.length)};
+  return Promise.all(core.map(k=>loadModelKey(k,L).then(tick))).then(()=>{
+    // Preparación en segundo plano; el jugador puede empezar sin esperar los assets pesados.
+    BOSS_MODELS_READY=Promise.all(boss.map(k=>loadModelKey(k,L))).catch(()=>{});
+    window.BOSS_MODELS_READY=BOSS_MODELS_READY;
+  });
+}
 // Clonar un modelo con esqueleto: Object3D.clone() comparte el esqueleto del original, así que cada copia
 // necesita su propio Skeleton enlazado a sus huesos clonados (si no, todas las copias se animarían a la vez / no se verían).
 function cloneModel(src){const clone=src.clone(true),a=[],b=[],sl=[],cl=[],s2c=new Map();
@@ -176,7 +262,7 @@ const ZOMBIE_VARIANTS=[['rig_CharRoot',2.2,-0.97],['rig_CharRoot001',.24,2.44],[
 function pickZombie(m,idx){const keep=ZOMBIE_VARIANTS[idx][0],rm=[];
   m.traverse(o=>{if(o.name==='Line001_peopleColors_0'||(/^rig_CharRoot\d*$/.test(o.name)&&o.name!==keep))rm.push(o)});
   rm.forEach(o=>o.parent&&o.parent.remove(o));return ZOMBIE_VARIANTS[idx]}
-function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),m=cloneModel(MODELS[k].scene),mats=[];m.scale.setScalar(size);m.rotation.y=ry;
+function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),src=MODELS[k];if(!src||!src.scene){console.warn('Modelo 3D no disponible:',k);return g}const m=cloneModel(src.scene),mats=[];m.scale.setScalar(size);m.rotation.y=ry;
   let fx=MODEL_FIX[k];
   if(k==='zombie'){const vi=zv!=null?zv:Math.floor(Math.random()*10),v=pickZombie(m,vi);fx=[-v[1],0,-v[2]];g.userData.zv=vi}
   if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(window.V69Animations)window.V69Animations.attach(g,k);return g}
@@ -215,9 +301,14 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
   return{g,top,fig}}
 const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
 // modelo, tamaño, color de tinte, intensidad del tinte, opacidad
-const MODEL_CFG={goblin:['zombie',15],brute:['ogre',54,0x7fa85f,.35],raider:['raider',44],ogre:['ogre',46],swarm:['zombie',11,0xe0b341,.45],saboteur:['raider',44,0x4a4a66,.55],healer:['zombie',14,0x55d98a,.5],wraith:['raider',48,0x8fd3ff,.7,.55]};
+const MODEL_CFG={goblin:['goblin',38],brute:['ogre',54,0x7fa85f,.35],raider:['raider',44],ogre:['ogre',46],swarm:['goblin',25,0xe0b341,.45],saboteur:['raider',44,0x4a4a66,.55],healer:['wizard',18,0x55d98a,.5],wraith:['raider',48,0x8fd3ff,.7,.55]};
 function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,icon,sc=1;
-  if(key==='boss'){c=bd.model?[bd.model[0],bd.model[1],bd.tint,.55]:['solani',13.3,bd.tint,.55];sc=bd.size/84}
+  if(key==='boss'){
+    const mk=bd.model&&MODELS[bd.model[0]]?bd.model[0]:'solani';
+    const have=MODELS[mk];
+    c=have?(bd.model?[mk,bd.model[1],bd.tint,.55]:['solani',13.3,bd.tint,.55]):['ogre',46,bd.tint,.55];
+    sc=bd.size/84;
+  }
   const m=inst(c[0],c[1],Math.PI/2,true,key==='brute'?5+Math.floor(Math.random()*5):null),mats=m.userData.mats;
   if(c[2]!=null){const tc=new THREE.Color(c[2]);mats.forEach(mm=>mm.color.lerp(tc,c[3]))}
   if(c[4]!=null)mats.forEach(mm=>{mm.transparent=true;mm.opacity=c[4];mm.depthWrite=false});
@@ -285,7 +376,10 @@ function startWave(){if(GameState.waveActive||GameState.winPending||!canAct())re
   // La plaga sale en un bloque seguido, en un punto aleatorio de la oleada
   if(plan.swarm)list.splice(Math.floor(rnd()*(list.length+1)),0,...Array(plan.swarm).fill('swarm'));
   const n=list.length;let t=0;
-  list.forEach((k,i)=>{t+=k==='swarm'?170:500;later(t,()=>{spawnEnemy(k);if(i===n-1){if(boss)later(900,()=>{spawnBoss();GameState.spawning=false});else GameState.spawning=false}})})}
+  list.forEach((k,i)=>{t+=k==='swarm'?170:500;later(t,()=>{spawnEnemy(k);if(i===n-1){if(boss)later(900,()=>{
+      const ready=window.BOSS_MODELS_READY||Promise.resolve();
+      ready.then(()=>{spawnBoss();GameState.spawning=false});
+    });else GameState.spawning=false}})})}
 function checkWaveComplete(){if(GameState.waveActive&&!GameState.spawning&&GameState.enemies.length===0){GameState.waveActive=false;const g=25+GameState.wave*3;GameState.gold+=g;GameState.goldEarned+=g;toggleBossTag(false);updateHUD();writeBestWave(GameState.wave);Progress.onWave(GameState.wave);Save.write();Music.setMood('calm');Ambience.setWave(GameState.wave,false);sfx.waveDone();showRewardToast(`+${g} oro · Oleada superada`);if(GameState.wave===WIN_WAVE&&!GameState.continued){GameState.winPending=true;later(900,()=>{GameState.winPending=false;showGameOver(true)})}}}
 
 /* ---------- Torres ---------- */
@@ -392,7 +486,7 @@ function frame(ts){requestAnimationFrame(frame);const real=ts-(S.last||ts),raw=M
     const tm=S.timers;S.timers=[];for(const x of tm){if(x.t<=S.now)x.fn();else S.timers.push(x)}
     updateTowers(S.now);updateEnemies(S.now,dt);checkWaveComplete();updateBossBar(GameState.enemies.find(e=>e.isBoss&&!e.dead));
     const cur=S.fx;S.fx=[];for(const f of cur){f.age+=dt;const p=Math.min(1,f.age/f.life);f.fn(p);if(p>=1){if(f.end)f.end()}else S.fx.push(f)}}
-  S.sel.scale.setScalar(1+.1*Math.sin(ts/150));
+  if(S.sel)S.sel.scale.setScalar(1+.1*Math.sin(ts/150));
   for(const t of GameState.towers)if(t.gem){t.gem.rotation.y=ts/400;t.gem.position.y=t.top+16+Math.sin(ts/350)*2}
   Ambience.update(ts);if(window.V69Animations)V69Animations.update(raw,ts);if(window.V6Visual)V6Visual.update(ts);if(window.V65Visual)V65Visual.update(ts);placeCam();GameState.enemies.forEach(e=>e.bar.quaternion.copy(cam.quaternion));renderer.render(scene,cam)}
 let booting=false,worldReady=false;
@@ -410,4 +504,6 @@ async function initGame(){
   renderer.setPixelRatio(S.pr);renderer.shadowMap.enabled=true;host.prepend(cs);
   buildWorld();bindInput();fit();Settings.applyGfx();new ResizeObserver(fit).observe(host);updateHUD();requestAnimationFrame(frame);
   worldReady=true;booting=false;setLoadState('ready');
+  // Carga diferida: la decoración 3D del mapa no bloquea el inicio de la partida.
+  loadMapKit();
 }
