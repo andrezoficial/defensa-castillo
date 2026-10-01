@@ -451,12 +451,16 @@ function updateTowers(time){const fury=time<GameState.furyUntil?SKILL_DEFS.fury.
     const sp=st.spec;if(sp&&sp.chain)zap(t,st,cand[0].e);else for(let i=0,n=Math.min(sp&&sp.multi||1,cand.length);i<n;i++)shootAt(t,cand[i].e,st)}}
 
 /* ---------- Cámara, entrada y bucle ---------- */
-function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=v?-Math.PI/2:0;S.dist=(v?Math.max(300/(t*cam.aspect),420/t):Math.max(440/(t*cam.aspect),270/t))*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600}
+function fitPortrait(){/* Móvil vertical: busca la distancia a la que el mapa proyectado llena el ancho (y cabe en alto). */
+const el=.96,c=Math.cos(el),A=-Math.PI/2,pts=[[0,0,0],[800,0,0],[0,0,500],[800,0,500],[40,70,0],[40,70,500]],pr=new THREE.Vector3();
+const ext=d=>{cam.position.set(400+Math.sin(A)*c*d,Math.sin(el)*d,255+Math.cos(A)*c*d);cam.lookAt(400,0,255);cam.updateMatrixWorld(true);cam.matrixWorldInverse.copy(cam.matrixWorld).invert();let ex=0,ey=0;for(const q of pts){pr.set(q[0],q[1],q[2]).project(cam);ex=Math.max(ex,Math.abs(pr.x));ey=Math.max(ey,Math.abs(pr.y))}return[ex,ey]};
+let d=1000;for(let i=0;i<8;i++){const[ex,ey]=ext(d);d*=Math.max(ex/.97,ey/.9)**.9}return d}
+function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=v?-Math.PI/2:0;S.dist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600}
 function placeCam(){const el=.96,c=Math.cos(el),d=S.dist,j=()=>(Math.random()-.5)*S.shake*Settings.shakeMul();const A=S.baz+S.az;cam.position.set(400+Math.sin(A)*c*d+j(),Math.sin(el)*d+j(),255+Math.cos(A)*c*d);cam.lookAt(400,0,255);S.shake=S.shake<.05?0:S.shake*.88}
 const ray=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();
 function groundAt(e){const r=host.getBoundingClientRect();v2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(v2,cam);return ray.ray.intersectPlane(gp,hit)?{x:Math.min(GAME_WIDTH,Math.max(0,hit.x)),y:Math.min(GAME_HEIGHT,Math.max(0,hit.z))}:null}
 function rotateCam(dir){S.az=Math.max(-1.2,Math.min(1.2,S.az+dir*.15))}
-function zoomCam(f){S.zoom=Math.min(1.2,Math.max(.55,S.zoom*f));fit()}
+function zoomCam(f){S.zoom=Math.min(1.2,Math.max(.4,S.zoom*f));fit()}
 function bindInput(){
   host.style.touchAction='none';
   const ignore=e=>e.target.closest('#msg,#howToPanel,#camControls,#abilityBar,#bossBar');
