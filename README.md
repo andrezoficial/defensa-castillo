@@ -180,7 +180,8 @@ El mapa conserva las coordenadas 2D (x→X, y→Z) para que el balance sea senci
 
 ## V6.9.1 — integración de personajes animados
 
-- `assets/models/wyvern.glb`: wyvern animado (clips `idol`, `walk`, `flying`, `take off`, `flaping`). Sustituye a los zombis; el juego usa `idol` como reposo y `walk` al avanzar.
+- `assets/models/zombie.glb`: pack de 10 zombis animados (clip `Take 001`). Cada instancia conserva una sola variante (ver V6.9.4).
+- `assets/models/wyvern.glb`: wyvern animado (clips `idol`, `walk`, `flying`, `take off`, `flaping`). Es el modelo del jefe **Wyvern Ancestral** (usa `flaping`).
 - `assets/models/solani.glb`: jefe Solani animado con el clip real `Idle`. Los estados de ataque, impacto, fase y muerte mantienen el fallback procedural porque este asset solo incluye `Idle`.
 - El resto de personajes conserva los modelos originales y el sistema de fallback de V6.9.
 - Los archivos FBX suministrados se mantienen fuera del runtime: son clips fuente y no se fuerzan sobre un rig incompatible.
@@ -203,12 +204,14 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 - **Service worker**: caché `v6.9.2` para que los navegadores descarguen los modelos nuevos.
 - Los FBX originales están en `assets/source-animations/`.
 
-## V6.9.3 — Wyvern en lugar de los zombis
+## V6.9.4 — Jefe dragón y Zombi Bruto
 
-Los enemigos que usaban el modelo de zombi (**Ariete**, **Plaga** y **Chamán**) ahora usan el wyvern animado (`assets/models/wyvern.glb`). Se eliminó `zombie.glb`.
-
-- **Tamaños**: Ariete ×5,5, Chamán ×5,2 y Plaga ×4,2 (la Plaga mantiene su tinte amarillo y el Chamán el verde).
-- **Animación (`js/v69.js`)**: `idol` en reposo/congelado y `walk` al avanzar; golpe, muerte y fase siguen con el movimiento procedural. Solo se crean acciones para los clips usados (el GLB trae 5).
-- **Pivote (`js/engine3d.js`)**: `MODEL_FIX` apoya los pies del wyvern en el suelo y centra el cuerpo (el modelo mira hacia +z, igual que el resto).
-- **Brillo propio (`js/fx.js`)**: el destello de daño/hielo/fuego suma sobre el emisivo base en vez de sobrescribirlo, para no apagar los ojos y la membrana luminosos del wyvern.
-- **Service worker**: caché `v6.9.3`.
+- **Jefe «Wyvern Ancestral»** (`BOSS_DEFS` en `js/config.js`): es el primer jefe de la rotación (oleada 5, luego 20…). Vuela a media altura, usa el clip `flaping` (aleteo en sitio, bucle limpio) y tiene 3 fases: CRÍAS (refuerzos), FURIA DRACÓNICA (enfurece + pisotón) y ESCAMAS ARCANAS (escudo). Los jefes pueden llevar `model: [clave, escala]`, `fly` y `hb` (altura de la barra de vida).
+- **Zombis**: Ariete, Plaga y Chamán vuelven a usar `zombie.glb` (tamaños ×15, ×11 y ×14; la Plaga conserva el tinte amarillo y el Chamán el verde).
+- **Zombi Bruto** (nuevo, estilo ogro): zombi enorme (×27 ≈ 43 de alto), lento (38), vida `110 + 16·oleada`, resistencia 25 % a flechas, recompensa 14. Aparece desde la oleada 4 (~12 % de cada oleada, en lugar de zombis normales) y se cuenta como «blindado» en el aviso de oleada.
+- **Una variante por zombi** (`js/engine3d.js`): `zombie.glb` es una multitud de 10 zombis en el suelo más una línea de suelo. `pickZombie()` conserva solo una variante (con su accesorio) por instancia, la centra en el origen y descarta el resto; en `js/v69.js` se filtran las pistas de animación de los esqueletos eliminados.
+- **Animaciones reales activas**: `MODELS` era un `const` global y no colgaba de `window`, así que `v69.js` nunca encontraba los clips y todo usaba el movimiento procedural. Ahora `window.MODELS=MODELS`; arqueros, hechiceros, zombis y jefes reproducen sus clips reales.
+- **Clonado de esqueletos**: `cloneModel()` enlaza los huesos por posición y no por nombre (en el zombi `_rootJoint` se repite 10 veces).
+- **Solani**: escala corregida a `13.3` (antes `0.065`, ~0,4 de alto).
+- **Brillo propio**: el destello de daño/hielo/fuego suma sobre el emisivo base del material (`js/fx.js`).
+- **Service worker**: caché `v6.9.4`.

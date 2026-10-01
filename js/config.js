@@ -40,6 +40,7 @@ const ENEMY_TYPES = {
   goblin: { name: 'Ariete', color: 0x4caf50 },
   raider: { name: 'Balista Veloz', color: 0xd4af37 },
   ogre: { name: 'Torre de Asedio', color: 0x6a1b1b },
+  brute: { name: 'Zombi Bruto', color: 0x7fa85f },
   swarm: { name: 'Plaga', color: 0xe0b341 },
   saboteur: { name: 'Saboteador', color: 0x6a6a96 },
   healer: { name: 'Chamán', color: 0x55d98a },
@@ -50,6 +51,7 @@ const ENEMY_TYPES = {
 // Consejo que aparece la primera vez que sale cada enemigo nuevo.
 const ENEMY_TIPS = {
   swarm: 'rápidos y numerosos: la catapulta los barre',
+  brute: 'enorme, lento y muy resistente a las flechas: usa magia y catapulta',
   saboteur: 'desactiva las torres cercanas: elimínalo primero',
   healer: 'cura a los aliados a su alrededor: ¡prioridad!',
   wraith: 'resiste flechas y asedio: usa magia',
@@ -60,6 +62,7 @@ const ENEMY_STATS = {
   goblin:   { hp: (w) => 30 + w * 8,  speed: 45, r: 11, reward: 5 },
   raider:   { hp: (w) => 30 + w * 8,  speed: 90, r: 11, reward: 6 },
   ogre:     { hp: (w) => 90 + w * 14, speed: 45, r: 16, reward: 12 },
+  brute:    { hp: (w) => 110 + w * 16, speed: 38, r: 17, reward: 14 },
   swarm:    { hp: (w) => 10 + w * 3,  speed: 78, r: 7,  reward: 2 },
   saboteur: { hp: (w) => 40 + w * 9,  speed: 58, r: 11, reward: 9 },
   healer:   { hp: (w) => 55 + w * 10, speed: 40, r: 12, reward: 14 },
@@ -71,6 +74,7 @@ const ENEMY_STATS = {
 // Un valor negativo significa vulnerabilidad.
 const RESIST = {
   ogre: { pierce: 0.3 },
+  brute: { pierce: 0.25 },
   boss: { pierce: 0.2 },
   wraith: { pierce: 0.5, siege: 0.5, magic: -0.3 },
 };
@@ -92,14 +96,15 @@ function getWavePlan(w) {
   const n = 4 + w * 2;
   const raiders = w > 1 ? Math.round(n * 0.3) : 0;
   const ogres = w > 2 ? Math.round(n * 0.25) : 0;
+  const brutes = w >= 4 ? Math.max(1, Math.round(n * 0.12)) : 0;
   const saboteurs = w >= 4 ? Math.max(1, Math.round(n * 0.1)) : 0;
   const healers = w >= 6 ? Math.max(1, Math.round(n * 0.08)) : 0;
   const wraiths = w >= 8 ? Math.max(1, Math.round(n * 0.12)) : 0;
   const swarm = w >= 3 ? Math.round(3 + w * 0.8) : 0;
-  const goblins = Math.max(0, n - raiders - ogres - saboteurs - healers - wraiths);
+  const goblins = Math.max(0, n - raiders - ogres - brutes - saboteurs - healers - wraiths);
   return {
-    total: goblins + raiders + ogres + saboteurs + healers + wraiths + swarm,
-    goblins, raiders, ogres, saboteurs, healers, wraiths, swarm,
+    total: goblins + raiders + ogres + brutes + saboteurs + healers + wraiths + swarm,
+    goblins, raiders, ogres, brutes, saboteurs, healers, wraiths, swarm,
     boss: w % BOSS_WAVE_INTERVAL === 0,
   };
 }
@@ -219,6 +224,13 @@ const specOf = (t) => (t.spec ? SPEC_DEFS[t.type].find((s) => s.id === t.spec) :
 //   summon (refuerzos), elite (saboteadores + chamán), wraiths (espectros),
 //   enrage (más veloz), shield (escudo que absorbe daño), stomp (pisotón periódico que aturde torres).
 const BOSS_DEFS = [
+  // Jefe dragón (wyvern animado). model = [clave del modelo, escala]; fly = vuela a media altura; hb = altura de la barra de vida.
+  { name: 'Wyvern Ancestral', model: ['wyvernboss', 13], fly: true, hb: 66, tint: null, hpMul: 1.4, speed: 30, size: 90,
+    phases: [
+      { at: 0.7, title: 'CRÍAS', do: ['summon'] },
+      { at: 0.4, title: 'FURIA DRACÓNICA', do: ['enrage', 'stomp'] },
+      { at: 0.2, title: 'ESCAMAS ARCANAS', do: ['shield'] },
+    ] },
   { name: 'Trabuquete Real', tint: null, hpMul: 1, speed: 28, size: 84,
     phases: [
       { at: 0.66, title: 'REFUERZOS', do: ['summon'] },

@@ -7,26 +7,36 @@
   const mixers=new Set(), controllers=new Set();
   // Estados que usan clips reales del GLB (el resto usa el movimiento procedural de reserva).
   // archer y wizard: idle en bucle + attack de una sola pasada que vuelve a idle (ver play/update).
-  const REAL={wyvern:['idle','walk'],solani:['idle'],archer:['idle','attack'],wizard:['idle','attack']};
+  const REAL={zombie:['idle','walk'],wyvern:['idle','walk'],wyvernboss:['idle','walk'],solani:['idle'],archer:['idle','attack'],wizard:['idle','attack']};
   const realOf=k=>REAL[k]||['idle','walk','attack','hit','death','phase'];
   const TOWER=k=>k==='archer'||k==='wizard';
   const reduced=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const clipName=(clips,state)=>{
+  // el jefe dragón usa el clip 'flaping' (aleteo en sitio, bucle limpio) tanto parado como en marcha
+  const KEYALIAS={wyvernboss:{idle:['flaping'],walk:['flaping']}};
+  const clipName=(clips,state,key)=>{
     if(!clips||!clips.length)return null;
     const aliases={idle:['idle','idol','breath','stand'],walk:['walk','run','move'],attack:['attack','shoot','cast','hit'],hit:['hit','hurt','damage'],death:['death','die'],phase:['roar','special','attack']};
-    const wanted=(aliases[state]||[state]).map(x=>x.toLowerCase());
+    const wanted=((KEYALIAS[key]&&KEYALIAS[key][state])||aliases[state]||[state]).map(x=>x.toLowerCase());
     return clips.find(c=>wanted.some(w=>c.name.toLowerCase().includes(w)))||clips[0];
   };
   // Un grupo retirado de la escena conserva su padre inmediato, así que hay que subir hasta la raíz.
   const inScene=o=>{for(;o;o=o.parent)if(o.isScene)return true;return false};
+  const ZC={};
+  function zombieClips(root,clips,zv){
+    const key=zv==null?'x':zv;if(ZC[key])return ZC[key];
+    const names=new Set();root.traverse(o=>names.add(o.name));
+    return ZC[key]=clips.map(cl=>new THREE.AnimationClip(cl.name,cl.duration,cl.tracks.filter(t=>names.has(t.name.slice(0,t.name.indexOf('.'))))));
+  }
   function attach(group,modelKey){
     if(!group||!group.children.length)return group;
     const source=window.MODELS&&window.MODELS[modelKey];
-    const clips=source&&source.animations||[];
+    let clips=source&&source.animations||[];
+    // el zombi trae 10 esqueletos y cada instancia conserva uno: se descartan las pistas de los demás
+    if(modelKey==='zombie'&&clips.length)clips=zombieClips(group.children[0],clips,group.userData.zv);
     const mixer=clips.length&&THREE.AnimationMixer?new THREE.AnimationMixer(group.children[0]):null;
     const actions={};
     // solo se crean acciones para los clips que el juego usa de verdad (el wyvern trae 5 clips y solo se usan idle y walk)
-    const used=REAL[modelKey]?[...new Set(REAL[modelKey].map(s=>clipName(clips,s)).filter(Boolean))]:clips;
+    const used=REAL[modelKey]?[...new Set(REAL[modelKey].map(s=>clipName(clips,s,modelKey)).filter(Boolean))]:clips;
     if(mixer){used.forEach(c=>{actions[c.name]=mixer.clipAction(c)});mixers.add(mixer)}
     const c={group,key:modelKey,mixer,clips,actions,state:'idle',nextState:'idle',t:Math.random()*10,age:0,seen:false,off:{y:0,rx:0,ry:0,rz:0},flash:0,attack:0,death:0,phase:0,baseScale:group.scale.clone(),reduced:reduced()};
     group.userData.v69=c;controllers.add(c);
@@ -36,7 +46,7 @@
   function play(c,state,force,ms){
     if(!c||(!force&&c.state===state))return;
     c.state=state;c.t=0;c.back=0;
-    const clip=realOf(c.key).includes(state)?clipName(c.clips,state):null;
+    const clip=realOf(c.key).includes(state)?clipName(c.clips,state,c.key):null;
     if(c.mixer&&clip){
       const tw=TOWER(c.key),once=state==='death'||(tw&&state==='attack');
       Object.values(c.actions).forEach(a=>{if(a!==c.actions[clip.name])a.fadeOut(.12)});

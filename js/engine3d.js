@@ -80,23 +80,33 @@ function mergeStatic(){const cached=new Set(Object.values(mc)),groups=new Map(),
 function buildCastle(){const c=inst('castle',150,-Math.PI/2);c.position.set(775,0,150);c.traverse(o=>{if(o.isMesh)o.receiveShadow=true});scene.add(c);const tl=new THREE.PointLight(0xffa040,.9,160);tl.position.set(725,25,150);scene.add(tl)}
 
 /* ---------- Modelos ---------- */
-const MODELS={};
-function loadModels(onProgress){const keys=['archer','wizard','catapult','goblin','wyvern','raider','ogre','solani','castle'],L=new THREE.GLTFLoader();let n=0;const tick=()=>{n++;if(onProgress)onProgress(n/keys.length)};
+const MODELS={};window.MODELS=MODELS; // v69.js lee los clips desde window.MODELS (un const global no cuelga de window)
+function loadModels(onProgress){const keys=['archer','wizard','catapult','goblin','zombie','wyvern','raider','ogre','solani','castle'],L=new THREE.GLTFLoader();let n=0;const tick=()=>{n++;if(onProgress)onProgress(n/keys.length)};
   return Promise.all(keys.map(k=>new Promise((ok,no)=>{
     if(MODELS[k]){tick();return ok()}
-    const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{MODELS[k]=g;tick();ok()};
+    const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;tick();ok()};
     if(d){const b=atob(d),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);L.parse(a.buffer,'',done,no)}else L.load('assets/models/'+k+'.glb',done,undefined,no)})))}
 // Clonar un modelo con esqueleto: Object3D.clone() comparte el esqueleto del original, así que cada copia
 // necesita su propio Skeleton enlazado a sus huesos clonados (si no, todas las copias se animarían a la vez / no se verían).
-function cloneModel(src){const clone=src.clone(true),a=[],b=[],bones={};
-  src.traverse(o=>{if(o.isSkinnedMesh)a.push(o)});clone.traverse(o=>{if(o.isSkinnedMesh)b.push(o);if(o.isBone)bones[o.name]=o});
-  b.forEach((cm,i)=>{const sm=a[i];cm.bind(new THREE.Skeleton(sm.skeleton.bones.map(x=>bones[x.name]),sm.skeleton.boneInverses),sm.bindMatrix);cm.frustumCulled=false});
+function cloneModel(src){const clone=src.clone(true),a=[],b=[],sl=[],cl=[],s2c=new Map();
+  // el clon recorre los nodos en el mismo orden que el original: se enlaza hueso a hueso por posición (los nombres pueden repetirse, p. ej. _rootJoint en el zombi)
+  src.traverse(o=>{sl.push(o);if(o.isSkinnedMesh)a.push(o)});clone.traverse(o=>{cl.push(o);if(o.isSkinnedMesh)b.push(o)});sl.forEach((o,i)=>s2c.set(o,cl[i]));
+  b.forEach((cm,i)=>{const sm=a[i];cm.bind(new THREE.Skeleton(sm.skeleton.bones.map(x=>s2c.get(x)),sm.skeleton.boneInverses),sm.bindMatrix);cm.frustumCulled=false});
   return clone}
 // Ajuste de pivote por modelo [x,y,z] (unidades del modelo, antes de escalar): apoya los pies en y=0 y centra el cuerpo.
 // El wyvern mide ~7 u de largo (cola incluida), tiene los pies en y≈-1.24 y su centro en z≈-1.45; mira hacia +z.
-const MODEL_FIX={wyvern:[0,1.24,1.45]};
-function inst(k,size,ry=0,own=false){const g=new THREE.Group(),m=cloneModel(MODELS[k].scene),mats=[];m.scale.setScalar(size);m.rotation.y=ry;
-  const fx=MODEL_FIX[k];if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(window.V69Animations)window.V69Animations.attach(g,k);return g}
+const MODEL_FIX={wyvern:[0,1.24,1.45],wyvernboss:[0,.93,1.3]};
+// zombie.glb es una multitud de 10 zombis (5 mujeres A-E, 5 hombres A-E) separados en el suelo + una línea de suelo.
+// Se deja solo una variante por instancia y se centra en el origen. Centros (x,z) medidos con la pose de reposo.
+const ZOMBIE_VARIANTS=[['rig_CharRoot',2.2,-0.97],['rig_CharRoot001',.24,2.44],['rig_CharRoot002',.05,.03],['rig_CharRoot003',-1.39,0],
+  ['rig_CharRoot004',1.4,.08],['rig_CharRoot005',-2.2,-1.08],['rig_CharRoot006',-.5,-1.05],['rig_CharRoot007',.78,-.92],['rig_CharRoot008',-.78,1.12],['rig_CharRoot009',.95,1]];
+function pickZombie(m,idx){const keep=ZOMBIE_VARIANTS[idx][0],rm=[];
+  m.traverse(o=>{if(o.name==='Line001_peopleColors_0'||(/^rig_CharRoot\d*$/.test(o.name)&&o.name!==keep))rm.push(o)});
+  rm.forEach(o=>o.parent&&o.parent.remove(o));return ZOMBIE_VARIANTS[idx]}
+function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),m=cloneModel(MODELS[k].scene),mats=[];m.scale.setScalar(size);m.rotation.y=ry;
+  let fx=MODEL_FIX[k];
+  if(k==='zombie'){const vi=zv!=null?zv:Math.floor(Math.random()*10),v=pickZombie(m,vi);fx=[-v[1],0,-v[2]];g.userData.zv=vi}
+  if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(window.V69Animations)window.V69Animations.attach(g,k);return g}
 function towerModel(type){const g=new THREE.Group();let top,fig;
   if(type==='basic'){part(g,'Box',[28,4,28],0x8a877e,0,2);part(g,'Box',[20,34,20],0xb5b1a5,0,21);part(g,'Box',[28,5,28],0xa19d92,0,40.5);
     for(const sx of[-1,1])for(const sz of[-1,1])part(g,'Box',[5,5,5],0xa19d92,sx*11,45.5,sz*11);
@@ -105,12 +115,12 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
     fig=inst('wizard',16);fig.position.y=41;g.add(fig);top=66}
   else{g.add(inst('catapult',38));top=30}
   return{g,top,fig}}
-const EN={goblin:{hb:42,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
+const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
 // modelo, tamaño, color de tinte, intensidad del tinte, opacidad
-const MODEL_CFG={goblin:['wyvern',5.5],raider:['raider',44],ogre:['ogre',46],swarm:['wyvern',4.2,0xe0b341,.45],saboteur:['raider',44,0x4a4a66,.55],healer:['wyvern',5.2,0x55d98a,.5],wraith:['raider',48,0x8fd3ff,.7,.55]};
+const MODEL_CFG={goblin:['zombie',15],brute:['zombie',27,0x7fa85f,.3],raider:['raider',44],ogre:['ogre',46],swarm:['zombie',11,0xe0b341,.45],saboteur:['raider',44,0x4a4a66,.55],healer:['zombie',14,0x55d98a,.5],wraith:['raider',48,0x8fd3ff,.7,.55]};
 function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,icon,sc=1;
-  if(key==='boss'){c=['solani',.065,bd.tint,.55];sc=bd.size/84}
-  const m=inst(c[0],c[1],Math.PI/2,true),mats=m.userData.mats;
+  if(key==='boss'){c=bd.model?[bd.model[0],bd.model[1],bd.tint,.55]:['solani',13.3,bd.tint,.55];sc=bd.size/84}
+  const m=inst(c[0],c[1],Math.PI/2,true,key==='brute'?5+Math.floor(Math.random()*5):null),mats=m.userData.mats;
   if(c[2]!=null){const tc=new THREE.Color(c[2]);mats.forEach(mm=>mm.color.lerp(tc,c[3]))}
   if(c[4]!=null)mats.forEach(mm=>{mm.transparent=true;mm.opacity=c[4];mm.depthWrite=false});
   g.add(m);g.userData.v69=m.userData.v69; // el motor llama a V69Animations.trigger/state con e.mesh (grupo externo)
@@ -124,7 +134,7 @@ function makeBar(w){const g=new THREE.Group(),bg=new THREE.Mesh(geo('Plane',1,1)
 /* ---------- Enemigos ---------- */
 function makeEnemy(key,x,y,wp,hp,speed,r,reward,bd){const m=enemyModel(key,bd),bw=r*2+8,b=makeBar(bw);m.g.position.set(x,0,y);scene.add(m.g,b.g);
   const e={id:++S.eid,key,name:ENEMY_TYPES[key].name,mesh:m.g,aura:m.aura,icon:m.icon,mats:m.mats,bar:b.g,fg:b.fg,bw,hp,maxHp:hp,speed,baseSpeed:speed,wpIndex:wp,x,y,radius:r,slowUntil:0,slowF:0,freezeUntil:0,burnUntil:0,burnDps:0,burnT:0,color:ENEMY_TYPES[key].color,reward,isBoss:key==='boss',seed:Math.random()*6.28,ang:0,flash:0,sc:EN[key].s,travel:0,vx:0,vy:0,hb:EN[key].hb,bd:bd||null,phaseIdx:0,phaseLock:0,shield:0,maxShield:0,pulseT:0,sabT:2500};
-  if(bd){e.name=bd.name;e.hb=bd.size+12}
+  if(bd){e.name=bd.name;e.hb=bd.hb||bd.size+12}
   GameState.enemies.push(e);return e}
 function spawnTypeAt(key,x,y,wp,travel=0){const st=ENEMY_STATS[key],w=GameState.wave,e=makeEnemy(key,x,y,wp,Math.round(st.hp(w)*getHpScale(w)),st.speed,st.r,st.reward);e.travel=travel;return e}
 function spawnEnemy(key){const p=PATH_POINTS[0];return spawnTypeAt(key,p.x,p.y,0)}
@@ -161,7 +171,7 @@ function updateEnemies(time,dt){for(const e of GameState.enemies){if(e.dead)cont
   const dx=wp.x-e.x,dy=wp.y-e.y,d=Math.hypot(dx,dy),mv=d>=4;
   if(!mv){e.wpIndex++;e.vx=e.vy=0}else{e.x+=dx/d*spd;e.y+=dy/d*spd;e.travel+=spd;e.vx=dx/d*cur;e.vy=dy/d*cur;let df=Math.atan2(-dy,dx)-e.ang;df=Math.atan2(Math.sin(df),Math.cos(df));e.ang+=df*Math.min(1,dt/120)}
   e.flash=Math.max(0,e.flash-dt);
-  const walk=mv&&cur>0;if(window.V69Animations)V69Animations.state(e.mesh,e.dead?'death':walk?'walk':'idle');const hov=e.hov=e.key==='wraith'?9+Math.sin(time/280+e.seed)*3:0;
+  const walk=mv&&cur>0;if(window.V69Animations)V69Animations.state(e.mesh,e.dead?'death':walk?'walk':'idle');const hov=e.hov=e.key==='wraith'?9+Math.sin(time/280+e.seed)*3:(e.bd&&e.bd.fly)?12+Math.sin(time/420+e.seed)*3:0;
   e.mesh.position.set(e.x,hov+(walk?Math.abs(Math.sin(time/110+e.seed))*1.6:0),e.y);e.mesh.rotation.set(0,e.ang,walk?Math.sin(time/130+e.seed)*.03:0);e.mesh.scale.setScalar(e.sc*(1+e.flash/600));
   if(e.aura)e.aura.material.opacity=(e.key==='healer'?.14:.2)+.08*Math.sin(time/180);
   if(e.icon)e.icon.rotation.y=time/300;
@@ -171,8 +181,8 @@ function updateEnemies(time,dt){for(const e of GameState.enemies){if(e.dead)cont
   GameState.enemies=GameState.enemies.filter(e=>!e.dead)}
 function startWave(){if(GameState.waveActive||GameState.winPending||!canAct())return;const W=++GameState.wave;GameState.waveActive=true;GameState.spawning=true;const plan=getWavePlan(W),boss=plan.boss,bd=boss?getBossDef(W):null;toggleBossTag(boss,bd&&bd.name);Music.setMood(boss?'boss':'battle');Ambience.setWave(W,boss);if(boss)sfx.boss();else sfx.wave();showWaveBanner(boss?`♛ OLEADA ${W} · ${bd.name.toUpperCase()}`:`⚔ OLEADA ${W}`);updateHUD();
   // Aviso la primera vez que aparece cada enemigo nuevo
-  [['swarm','swarm'],['saboteur','saboteurs'],['healer','healers'],['wraith','wraiths']].filter(([k,pk])=>plan[pk]>0&&!GameState.seen[k]).forEach(([k],i)=>{GameState.seen[k]=1;later(1500+i*1900,()=>showRewardToast(`⚠ Nuevo: ${ENEMY_TYPES[k].name} — ${ENEMY_TIPS[k]}`))});
-  const list=[];[['goblin','goblins'],['raider','raiders'],['ogre','ogres'],['saboteur','saboteurs'],['healer','healers'],['wraith','wraiths']].forEach(([k,pk])=>{for(let i=0;i<plan[pk];i++)list.push(k)});
+  [['swarm','swarm'],['brute','brutes'],['saboteur','saboteurs'],['healer','healers'],['wraith','wraiths']].filter(([k,pk])=>plan[pk]>0&&!GameState.seen[k]).forEach(([k],i)=>{GameState.seen[k]=1;later(1500+i*1900,()=>showRewardToast(`⚠ Nuevo: ${ENEMY_TYPES[k].name} — ${ENEMY_TIPS[k]}`))});
+  const list=[];[['goblin','goblins'],['raider','raiders'],['ogre','ogres'],['brute','brutes'],['saboteur','saboteurs'],['healer','healers'],['wraith','wraiths']].forEach(([k,pk])=>{for(let i=0;i<plan[pk];i++)list.push(k)});
   let sd=W*7919+13;const rnd=()=>(sd=(sd*1664525+1013904223)%4294967296)/4294967296;for(let i=list.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[list[i],list[j]]=[list[j],list[i]]}
   // La plaga sale en un bloque seguido, en un punto aleatorio de la oleada
   if(plan.swarm)list.splice(Math.floor(rnd()*(list.length+1)),0,...Array(plan.swarm).fill('swarm'));

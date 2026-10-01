@@ -59,7 +59,7 @@ function updateCombatUI() {
   const special = plan.swarm + plan.saboteurs + plan.healers + plan.wraiths;
   $('waveBtnHint').textContent = active
     ? `${GameState.enemies.length} en el campo`
-    : `${plan.total} enemigos` + (plan.raiders ? ` · ${plan.raiders} veloces` : '') + (plan.ogres ? ` · ${plan.ogres} blindados` : '') +
+    : `${plan.total} enemigos` + (plan.raiders ? ` · ${plan.raiders} veloces` : '') + ((plan.ogres + plan.brutes) ? ` · ${plan.ogres + plan.brutes} blindados` : '') +
       (special ? ` · ${special} especiales` : '') + (nextIsBoss ? ' · ♛ JEFE' : '');
 
   if (typeof updateSkillUI === 'function') updateSkillUI();
