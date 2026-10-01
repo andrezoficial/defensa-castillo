@@ -226,3 +226,8 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 ## V7.4 — Avisos y ogros
 - **Letrero gigante**: con "reducir movimiento" activo (muy común en móvil/Windows), los avisos de oleada, jefe y presentación quedaban con `opacity:1` para siempre. Ahora se ocultan solos por JS (`v6.js`, `v65.js`) y se rediseñaron como píldoras pequeñas arriba, sin texto secundario y sin capturar toques.
 - **Ogro Bruto**: antes era un zombi escalado ×27 (según la variante parecía un zombi flaco); ahora usa el modelo `ogre.glb` (×54) con tinte verdoso. Mismos stats.
+
+## V7.7 — Correcciones
+- **El juego no cargaba** (se quedaba en «PREPARANDO EL CAMPO…»): el generador aleatorio de `texturedMat()` (V7.6) devolvía valores negativos y `canvas.arc()` lanzaba una excepción por radio negativo. Ahora usa un LCG correcto en [0, 1).
+- **Texturas del suelo y del camino**: `mergeStatic()` fusionaba las mallas sin coordenadas UV, así que la textura se perdía; los materiales con textura ya no se fusionan.
+- Avisos de Three.js: se quitó `roughness` (no existe en `MeshLambertMaterial`) y `colorSpace` (r128 usa `encoding`).

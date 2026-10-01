@@ -36,7 +36,7 @@ function texturedMat(baseHex, seed, kind='ground'){
   const key=`${baseHex}:${seed}:${kind}`; if(mc[key]) return mc[key];
   const c=document.createElement('canvas'),size=384;c.width=c.height=size;const x=c.getContext('2d'),b=hexRgb(baseHex);
   x.fillStyle=`rgb(${b.r},${b.g},${b.b})`;x.fillRect(0,0,size,size);
-  let q=seed|0; const rnd=()=>((q=q*1664525+1013904223)|0)/2147483648+.5;
+  let q=seed|0; const rnd=()=>((q=(Math.imul(q,1664525)+1013904223)|0)>>>0)/4294967296;
   for(let i=0;i<(kind==='road'?2200:3000);i++){
     const px=rnd()*size,py=rnd()*size,rad=kind==='road'?(0.5+rnd()*2.8):(0.4+rnd()*3.4);
     const delta=((rnd()-.5)*18)|0, r=Math.max(0,Math.min(255,b.r+delta)),g=Math.max(0,Math.min(255,b.g+delta)),bl=Math.max(0,Math.min(255,b.b+delta));
@@ -52,8 +52,8 @@ function texturedMat(baseHex, seed, kind='ground'){
       const px=rnd()*size,py=rnd()*size; x.fillStyle='rgba(58,43,27,.16)';x.beginPath();x.arc(px,py,1+rnd()*2.2,0,Math.PI*2);x.fill();
     }
   }
-  const tex=new THREE.CanvasTexture(c);tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(kind==='road'?4.6:2.5,kind==='road'?3.2:2.1);tex.anisotropy=Math.min(8,renderer?.capabilities?.getMaxAnisotropy?.()||4);tex.colorSpace=THREE.SRGBColorSpace;
-  const m=new THREE.MeshLambertMaterial({color:0xffffff,map:tex,roughness:.95});mc[key]=m;return m;
+  const tex=new THREE.CanvasTexture(c);tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(kind==='road'?4.6:2.5,kind==='road'?3.2:2.1);tex.anisotropy=Math.min(8,renderer?.capabilities?.getMaxAnisotropy?.()||4);if(THREE.sRGBEncoding)tex.encoding=THREE.sRGBEncoding;
+  const m=new THREE.MeshLambertMaterial({color:0xffffff,map:tex});mc[key]=m;return m;
 }
 function pebbleField(x0,z0,x1,z1,baseHex,count,scale=1,avoid=0){
   const g=new THREE.Group();g.position.set(0,0,0);for(let i=0;i<count;i++){
@@ -139,7 +139,8 @@ function buildWorld(){
 // Une en una sola malla por material todo lo estático (suelo, camino, árboles, rocas…):
 // pasa de ~150 llamadas de dibujo (x2 por las sombras) a una decena.
 function mergeStatic(){const cached=new Set(Object.values(mc)),groups=new Map(),old=[];scene.updateMatrixWorld(true);
-  scene.traverse(o=>{if(!o.isMesh||!cached.has(o.material)||o.renderOrder)return;const k=o.material.uuid+(o.castShadow?'c':'')+(o.receiveShadow?'r':'');let g=groups.get(k);if(!g)groups.set(k,g={mat:o.material,cs:o.castShadow,rs:o.receiveShadow,items:[]});g.items.push(o);old.push(o)});
+  scene.traverse(o=>{if(!o.isMesh||!cached.has(o.material)||o.material.map||o.renderOrder)return; // los materiales con textura necesitan UV: no se fusionan
+  const k=o.material.uuid+(o.castShadow?'c':'')+(o.receiveShadow?'r':'');let g=groups.get(k);if(!g)groups.set(k,g={mat:o.material,cs:o.castShadow,rs:o.receiveShadow,items:[]});g.items.push(o);old.push(o)});
   old.forEach(o=>o.parent.remove(o));
   for(const g of groups.values()){const gs=g.items.map(o=>{const c=o.geometry.clone();c.applyMatrix4(o.matrixWorld);return c});let nv=0,ni=0;
     for(const c of gs){nv+=c.attributes.position.count;ni+=c.index?c.index.count:c.attributes.position.count}
