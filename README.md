@@ -238,3 +238,6 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 - Los modelos y texturas del pack se cargan de forma diferida después del primer frame para no bloquear el inicio.
 - Texturas del kit limitadas a 1024 px máximo para reducir memoria GPU/red.
 - La decoración evita la ruta principal y la zona del castillo; no modifica lógica de combate ni construcción.
+
+
+V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 variantes 3D y texturas optimizadas para web.

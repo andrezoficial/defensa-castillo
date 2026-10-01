@@ -1,6 +1,6 @@
 // engine3d.js — Motor 3D (Three.js). Conserva el mapa 2D: x→X, y→Z (1 px = 1 unidad).
 const host=document.getElementById('gameHost');
-const S={running:false,now:0,fx:[],timers:[],shake:0,az:0,zoom:1,last:0,baz:0,dist:900,slots:null,prev:null,sel:null,eid:0,slow:0,skPrev:null,fl:null,scorch:[],pops:0};
+const S={running:false,now:0,fx:[],timers:[],shake:0,az:0,zoom:1,u:1,last:0,baz:0,dist:900,slots:null,prev:null,sel:null,eid:0,slow:0,skPrev:null,fl:null,scorch:[],pops:0};
 GameState.scene=S;
 const gc={},mc={},bc={};
 // Dispositivo táctil / pantalla pequeña: sombras y resolución más ligeras.
@@ -135,9 +135,15 @@ function buildWorld(){
   const goalRing=flat(new THREE.Mesh(geo('Ring',48,4,36),tmat(0xffcf70,.22)));goalRing.position.set(742,1.4,150);scene.add(goalRing);
   for(let i=0;i<6;i++){const s=16+i*11,ang=i*1.047;const stone=part(scene,'Dodecahedron',[3.2,0],0x77766f,742+Math.cos(ang)*s,3,150+Math.sin(ang)*s);stone.receiveShadow=true}
 
-  // Vegetación por capas: árboles, matorrales y piedras; se mantienen lejos de la ruta.
-  const spots=[];for(let i=0;i<1400&&spots.length<42;i++){const x=16+R()*768,y=16+R()*468;if(distToPath(x,y)<70||(x>700&&y<225)||spots.some(s=>Math.hypot(s.x-x,s.y-y)<26))continue;spots.push({x,y})}
-  spots.forEach(s=>{const k=R(),o=new THREE.Group();o.position.set(s.x,0,s.y);if(k<.40){part(o,'Cylinder',[3,4,16,6],0x583a23,0,8);part(o,'Cone',[16,24,8],0x28502a,0,27);part(o,'Cone',[12,18,8],0x356838,0,40);part(o,'Cone',[8,13,8],0x467747,0,51);o.scale.setScalar(.72+R()*.6)}else if(k<.78){for(let i=0;i<3;i++)part(o,'Sphere',[7+R()*4,7+R()*3,5],i%2?0x315b2c:0x3f6e36,(R()-.5)*10,5+R()*7,(R()-.5)*8)}else{part(o,'Dodecahedron',[7+R()*4,0],0x73766f,0,4,0);if(R()>.45)part(o,'Dodecahedron',[4,0],0x656861,5,3,2)}scene.add(o)});
+  // Árboles 3D: las posiciones se mantienen fuera de la ruta y se sustituyen por
+  // variantes del Stylized Nature MegaKit. La carga es diferida para no bloquear el arranque.
+  const treeSpots=[];for(let i=0;i<1500&&treeSpots.length<34;i++){const x=18+R()*764,y=18+R()*464;if(distToPath(x,y)<70||(x>700&&y<225)||treeSpots.some(s=>Math.hypot(s.x-x,s.y-y)<29))continue;treeSpots.push({x,y,seed:R()})}
+  queueNatureTrees(treeSpots);
+  // Relleno ligero de suelo: conserva arbustos y rocas, sin competir con los nuevos árboles.
+  treeSpots.forEach((s,i)=>{
+    if(i%2!==0){for(let j=0;j<2;j++)part(scene,'Sphere',[5.5+R()*3,4.2+R()*2.5,4.4],j?0x3f6e36:0x315b2c,s.x+(R()-.5)*14,4+R()*4,s.y+(R()-.5)*12)}
+    if(i%4===0){const rock=part(scene,'Dodecahedron',[4.5+R()*4,0],0x73766f,s.x+(R()-.5)*18,3,s.y+(R()-.5)*18);rock.receiveShadow=true}
+  });
 
   addBattlefieldProps();
   addValleyRiver();
@@ -178,6 +184,59 @@ function mapProp(k,scale=1,ry=0){
   const g=src.scene.clone(true); g.scale.setScalar(scale); g.rotation.y=ry;
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=true}});
   return g;
+}
+
+/* ---------- Árboles 3D del Stylized Nature MegaKit ---------- */
+const NATURE_TREE_MODELS={};
+let NATURE_TREES_READY=Promise.resolve();
+const NATURE_TREE_KEYS=['CommonTree_1','CommonTree_2','CommonTree_3','Pine_1','Pine_2'];
+
+function loadNatureTreeKey(k,L){
+  return new Promise((ok)=>{
+    if(NATURE_TREE_MODELS[k]) return ok(NATURE_TREE_MODELS[k]);
+    L.load('assets/nature-trees/'+k+'.gltf',g=>{
+      NATURE_TREE_MODELS[k]=g;
+      ok(g);
+    },undefined,e=>{
+      console.warn('Nature tree omitido:',k,e);
+      ok(null);
+    });
+  });
+}
+function addNatureTreeInstance(src,x,z,scale,rot,shadow){
+  if(!src) return;
+  const g=src.scene.clone(true);
+  g.position.set(x,Math.max(.16,.24*scale),z);
+  g.rotation.y=rot;
+  g.scale.setScalar(scale);
+  g.traverse(o=>{
+    if(!o.isMesh) return;
+    o.castShadow=shadow;
+    o.receiveShadow=true;
+    o.frustumCulled=true;
+    if(o.material && o.material.transparent){
+      o.material.alphaTest=Math.max(o.material.alphaTest||0,.45);
+      o.material.depthWrite=true;
+    }
+  });
+  scene.add(g);
+}
+function queueNatureTrees(spots){
+  const L=new THREE.GLTFLoader();
+  NATURE_TREES_READY=Promise.all(NATURE_TREE_KEYS.map(k=>loadNatureTreeKey(k,L))).then(models=>{
+    const usable=models.filter(Boolean);
+    if(!usable.length) return;
+    spots.forEach((s,i)=>{
+      const r=s.seed;
+      const pine=r>.72;
+      const variant=pine ? usable[3+(i%Math.min(2,Math.max(1,usable.length-3)))] : usable[i%Math.min(3,usable.length)];
+      const treeScale=(pine?6.1:5.7)+r*(pine?1.35:1.55);
+      const rot=(r*6.28318530718);
+      // Solo una fracción proyecta sombras: la escena conserva profundidad sin multiplicar el coste del shadow map.
+      const shadow=!S.lowPower && (i%3===0);
+      addNatureTreeInstance(variant,s.x,s.y,treeScale,rot,shadow);
+    });
+  }).catch(e=>console.warn('Nature trees no disponibles:',e));
 }
 function addMapHouse(x,z,rot=0,scale=13.5){
   const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rot;
@@ -340,7 +399,7 @@ function damageEnemy(e,dmg,dtype,o){o=o||{};if(e.dead)return;
   damageNumber(e,shown,{crit:o.crit,tick:o.tick,soak:soak&&dmg<=0,force:e.hp<=0});
   if(o.crit){sfx.crit();burst(e.x,22,e.y,0xffe27a,6,55)}
   if(e.hp<=0){e.dead=true;if(window.V69Animations)V69Animations.trigger(e.mesh,'death');const bounty=Math.round(e.reward*Progress.goldMul());GameState.gold+=bounty;GameState.goldEarned+=bounty;GameState.kills++;Progress.onKill(e);goldPop(e.x,e.y,bounty);updateHUD();sfx.kill(e.isBoss);deathFx(e);
-    dropBar(e);const m=e.mesh,s0=e.sc;addFx(240,p=>{m.scale.setScalar(Math.max(.01,s0*(1-p)));m.position.y=p*10},()=>{scene.remove(m);freeEnemy(e)});return}
+    dropBar(e);const m=e.mesh,s0=e.sc*S.u;addFx(240,p=>{m.scale.setScalar(Math.max(.01,s0*(1-p)));m.position.y=p*10},()=>{scene.remove(m);freeEnemy(e)});return}
   const ph=e.bd&&e.bd.phases[e.phaseIdx];if(ph&&e.hp<=e.maxHp*ph.at){if(window.V69Animations)V69Animations.trigger(e.mesh,'phase');startBossPhase(e,ph)}}
 function dropBar(e){scene.remove(e.bar);e.fg.material.dispose()}
 function freeEnemy(e){e.mats.forEach(m=>m.dispose())}
@@ -361,12 +420,12 @@ function updateEnemies(time,dt){for(const e of GameState.enemies){if(e.dead)cont
   if(!mv){e.wpIndex++;e.vx=e.vy=0}else{e.x+=dx/d*spd;e.y+=dy/d*spd;e.travel+=spd;e.vx=dx/d*cur;e.vy=dy/d*cur;let df=Math.atan2(-dy,dx)-e.ang;df=Math.atan2(Math.sin(df),Math.cos(df));e.ang+=df*Math.min(1,dt/120)}
   e.flash=Math.max(0,e.flash-dt);
   const walk=mv&&cur>0;if(window.V69Animations)V69Animations.state(e.mesh,e.dead?'death':walk?'walk':'idle');const hov=e.hov=e.key==='wraith'?9+Math.sin(time/280+e.seed)*3:(e.bd&&e.bd.fly)?12+Math.sin(time/420+e.seed)*3:0;
-  e.mesh.position.set(e.x,hov+(walk?Math.abs(Math.sin(time/110+e.seed))*1.6:0),e.y);e.mesh.rotation.set(0,e.ang,walk?Math.sin(time/130+e.seed)*.03:0);e.mesh.scale.setScalar(e.sc*(1+e.flash/600));
+  e.mesh.position.set(e.x,hov+(walk?Math.abs(Math.sin(time/110+e.seed))*1.6:0),e.y);e.mesh.rotation.set(0,e.ang,walk?Math.sin(time/130+e.seed)*.03:0);e.mesh.scale.setScalar(e.sc*S.u*(1+e.flash/600));
   if(e.aura)e.aura.material.opacity=(e.key==='healer'?.14:.2)+.08*Math.sin(time/180);
   if(e.icon)e.icon.rotation.y=time/300;
   if(e.shieldMesh&&e.shield>0)e.shieldMesh.material.opacity=.22+.08*Math.sin(time/160);
   updateEnemyLook(e,time,dt);
-  const r=Math.max(0,e.hp/e.maxHp);e.bar.position.set(e.x,e.hb,e.y);e.fg.scale.set(Math.max(.01,r*e.bw),3,1);e.fg.position.x=-(1-r)*e.bw/2;e.fg.material.color.setHex(r<.3?0xd84d50:r<.6?0xe1b64e:0x7fbd59)}
+  const r=Math.max(0,e.hp/e.maxHp);e.bar.position.set(e.x,e.hb*S.u,e.y);e.bar.scale.setScalar(S.u);e.fg.scale.set(Math.max(.01,r*e.bw),3,1);e.fg.position.x=-(1-r)*e.bw/2;e.fg.material.color.setHex(r<.3?0xd84d50:r<.6?0xe1b64e:0x7fbd59)}
   GameState.enemies=GameState.enemies.filter(e=>!e.dead)}
 function startWave(){if(GameState.waveActive||GameState.winPending||!canAct())return;const W=++GameState.wave;GameState.waveActive=true;GameState.spawning=true;const plan=getWavePlan(W),boss=plan.boss,bd=boss?getBossDef(W):null;toggleBossTag(boss,bd&&bd.name);Music.setMood(boss?'boss':'battle');Ambience.setWave(W,boss);if(boss)sfx.boss();else sfx.wave();showWaveBanner(boss?`♛ OLEADA ${W} · ${bd.name.toUpperCase()}`:`⚔ OLEADA ${W}`);updateHUD();
   // Aviso la primera vez que aparece cada enemigo nuevo
@@ -396,7 +455,7 @@ function hideBuildGrid(){S.slots.visible=false}
 function drawPlacementPreview(x,y){if(!GameState.selectedTower)return;GameState.placementX=x;GameState.placementY=y;const d=TOWER_DEFS[GameState.selectedTower],sl=nearestSlot(x,y),ok=sl&&isValidPlacement(sl.x,sl.y,GameState.selectedTower),c=ok?0x5be3b0:0xff6b6b,p=sl||{x,y},r=sl?d.range:18,pv=S.prev;
   pv.visible=true;pv.position.set(p.x,0,p.y);[pv.rng,pv.fill,pv.col].forEach(o=>o.material.color.setHex(c));pv.rng.scale.set(r,r,1);pv.fill.scale.set(r,r,1);pv.col.visible=!!sl}
 function clearPlacementPreview(){S.prev.visible=false;if(S.skPrev)S.skPrev.visible=false;GameState.placementDragging=false;GameState.placementPointerId=null}
-function applyScale(t){t.visual.scale.setScalar((1+.07*(t.level-1))*(t.hl?1.06:1))}
+function applyScale(t){t.visual.scale.setScalar((1+.07*(t.level-1))*(t.hl?1.06:1)*S.u)}
 function updateLevelPips(t){if(t.pips)scene.remove(t.pips);const g=new THREE.Group(),sp=specOf(t),col=sp?sp.color:0xcfefff;g.position.set(t.x,3,t.y+18);for(let i=0;i<t.level;i++){const m=new THREE.Mesh(geo('Sphere',2.6,8,8),bmat(col));m.position.x=(i-(t.level-1)/2)*8;g.add(m)}scene.add(g);t.pips=g}
 function selectPlacedTower(t){GameState.selectedTower=null;GameState.selectedSkill=null;if(S.skPrev)S.skPrev.visible=false;t.specPending=null;syncBuildButtons();hideBuildGrid();clearPlacementPreview();
   if(GameState.selectedPlacedTower&&GameState.selectedPlacedTower!==t)highlightTower(GameState.selectedPlacedTower,false);
@@ -412,7 +471,7 @@ function placeTower(x,y){if(!GameState.selectedTower)return;const type=GameState
   const {x:tx,y:ty}=slot;GameState.gold-=d.cost;updateHUD();
   const m=towerModel(type);m.g.position.set(tx,0,ty);scene.add(m.g);
   const rg=flat(new THREE.Mesh(geo('Ring',.97,1,64),tmat(0x9fe3ff,.5)));rg.position.set(tx,1.8,ty);rg.scale.set(d.range,d.range,1);rg.visible=false;scene.add(rg);
-  const t={x:tx,y:ty,type,mode:'first',lastShot:0,visual:m.g,range:rg,level:1,invested:d.cost,top:m.top,fig:m.fig};GameState.towers.push(t);updateLevelPips(t);
+  const t={x:tx,y:ty,type,mode:'first',lastShot:0,visual:m.g,range:rg,level:1,invested:d.cost,top:m.top*S.u,top0:m.top,fig:m.fig};GameState.towers.push(t);updateLevelPips(t);
   addFx(300,p=>m.g.scale.setScalar(Math.max(.01,easeBack(p))),()=>applyScale(t));burst(tx,4,ty,0xb9ad98,6,26);sfx.place();clearSelection()}
 function upgradeTower(t){if(t.level>=MAX_TOWER_LEVEL)return;const cost=getUpgradeCost(t.type,t.level);
   if(GameState.gold<cost){sfx.deny();showRewardToast(`Oro insuficiente · faltan ${cost-GameState.gold} ✦`);return}
@@ -455,7 +514,10 @@ function fitPortrait(){/* Móvil vertical: busca la distancia a la que el mapa p
 const el=.96,c=Math.cos(el),A=-Math.PI/2,pts=[[0,0,0],[800,0,0],[0,0,500],[800,0,500],[40,70,0],[40,70,500]],pr=new THREE.Vector3();
 const ext=d=>{cam.position.set(400+Math.sin(A)*c*d,Math.sin(el)*d,255+Math.cos(A)*c*d);cam.lookAt(400,0,255);cam.updateMatrixWorld(true);cam.matrixWorldInverse.copy(cam.matrixWorld).invert();let ex=0,ey=0;for(const q of pts){pr.set(q[0],q[1],q[2]).project(cam);ex=Math.max(ex,Math.abs(pr.x));ey=Math.max(ey,Math.abs(pr.y))}return[ex,ey]};
 let d=1000;for(let i=0;i<8;i++){const[ex,ey]=ext(d);d*=Math.max(ex/.97,ey/.9)**.9}return d}
-function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=v?-Math.PI/2:0;S.dist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600}
+function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=v?-Math.PI/2:0;S.dist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600;
+  /* Móvil: personajes más grandes para que se distingan (vertical x1.5, horizontal bajo x1.25) */
+  S.u=v?(w<=520?1.5:1.3):(h<420?1.25:1);
+  for(const t of GameState.towers){t.top0=t.top0||t.top;t.top=t.top0*S.u;applyScale(t)}}
 function placeCam(){const el=.96,c=Math.cos(el),d=S.dist,j=()=>(Math.random()-.5)*S.shake*Settings.shakeMul();const A=S.baz+S.az;cam.position.set(400+Math.sin(A)*c*d+j(),Math.sin(el)*d+j(),255+Math.cos(A)*c*d);cam.lookAt(400,0,255);S.shake=S.shake<.05?0:S.shake*.88}
 const ray=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();
 function groundAt(e){const r=host.getBoundingClientRect();v2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(v2,cam);return ray.ray.intersectPlane(gp,hit)?{x:Math.min(GAME_WIDTH,Math.max(0,hit.x)),y:Math.min(GAME_HEIGHT,Math.max(0,hit.z))}:null}
