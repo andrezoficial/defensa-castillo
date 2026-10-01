@@ -15,6 +15,9 @@ const GameState = {
   lastGold: INITIAL_GOLD,
   lastLives: INITIAL_LIVES,
   wave: 0,
+  kills: 0,
+  totalDamage: 0,
+  goldEarned: 0,
   waveActive: false,
   spawning: false,
   paused: false,
@@ -26,6 +29,11 @@ const GameState = {
   placementPointerId: null,
   placementX: 0,
   placementY: 0,
+  // V4.0
+  skills: { meteor: 0, freeze: 0, fury: 0 }, // instante (tiempo de juego) en que cada habilidad vuelve a estar lista
+  selectedSkill: null,
+  furyUntil: 0,
+  seen: {},            // avisos ya mostrados (enemigos nuevos, sabotaje…)
 };
 
 // ¿Se puede interactuar con el mapa ahora mismo? (no en el menú, ni en pausa, ni con un mensaje final)

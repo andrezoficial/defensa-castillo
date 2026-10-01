@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Defensa del Castillo — Edición 3D</title>
+<title>Defensa del Castillo — V6</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%B0%3C/text%3E%3C/svg%3E">
 <meta name="theme-color" content="#120f0c">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=MedievalSharp&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=MedievalSharp&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=MedievalSharp&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="css/styles.css">
 <script src="js/vendor/three.min.js"></script>
 <script src="js/vendor/GLTFLoader.js"></script>
@@ -23,24 +28,45 @@
       <h1>DEFENSA<br><span>DEL CASTILLO</span></h1>
       <p class="start-copy">Construye tus defensas, resiste las oleadas y protege el reino.</p>
       <div class="start-actions">
+        <button id="continueSaveBtn" class="primary-action continue-save" hidden disabled><span>💾</span> <b id="continueSaveLabel"></b></button>
         <button id="startGameBtn" class="primary-action" disabled><span>⚔</span> <b id="startLabel">PREPARANDO EL CAMPO…</b></button>
+        <button id="settingsBtnStart" class="secondary-action">⚙ AJUSTES</button>
+        <button id="realmBtn" class="secondary-action">👑 REINO</button>
+        <button id="statsBtn" class="secondary-action">📊 ESTADÍSTICAS</button>
         <button id="howToBtn" class="secondary-action">CÓMO JUGAR</button>
       </div>
       <div id="loadStatus" class="load-status" role="status" aria-live="polite"></div>
       <button id="retryLoadBtn" class="secondary-action" hidden>REINTENTAR</button>
-      <div class="version-chip" id="bestChip">EDICIÓN 3D</div>
+      <div class="rotate-hint">📱 Mejor con el móvil en horizontal</div>
+      <div class="version-chip" id="bestChip">V6 · EDICIÓN 3D</div>
+    </div>
+    <div id="realmPanel" class="howto-panel realm-panel">
+      <button id="closeRealm" class="close-modal">×</button>
+      <h2>El Reino</h2>
+      <div id="realmBody"></div>
+    </div>
+    <div id="statsPanel" class="howto-panel stats-panel">
+      <button id="closeStats" class="close-modal">×</button>
+      <h2>Estadísticas del Reino</h2>
+      <div id="statsBody"></div>
     </div>
     <div id="howToPanel" class="howto-panel">
       <button id="closeHowTo" class="close-modal">×</button>
       <h2>Cómo defender el castillo</h2>
       <div class="howto-grid">
-        <div><b>01 · CONSTRUYE</b><span>Selecciona una torre y colócala fuera del camino.</span></div>
-        <div><b>02 · MEJORA</b><span>Haz clic en una torre para mejorarla o venderla.</span></div>
+        <div><b>01 · CONSTRUYE</b><span>Selecciona una torre y colócala junto al camino. Los blindados resisten las flechas: usa hechiceros y catapultas.</span></div>
+        <div><b>02 · MEJORA</b><span>Toca una torre para mejorarla, venderla o cambiar su objetivo (primero, más fuerte, más cercano).</span></div>
         <div><b>03 · RESISTE</b><span>Inicia la oleada y combina torres para detener a los enemigos.</span></div>
-        <div><b>04 · JEFE</b><span>Cada 5 oleadas aparece el Trabuquete Real, con refuerzos. Sobrevive 15 oleadas para ganar.</span></div>
+        <div><b>04 · JEFES</b><span>Cada 5 oleadas llega un jefe con varias fases: se vuelve invulnerable un instante, invoca aliados, se enfurece o aturde tus torres. Sobrevive 15 oleadas para ganar.</span></div>
+        <div><b>05 · HABILIDADES</b><span>Tres poderes con enfriamiento: ☄ Meteoro (eliges el punto), ❄ Escarcha (congela a todos) y ⚡ Furia Real (torres más rápidas). Atajos Z · X · C.</span></div>
+        <div><b>06 · ESPECIALIZA</b><span>Al nivel máximo, cada torre elige entre dos caminos distintos (francotirador o ráfaga, glacial o tormenta, bombardera o incendiaria). Toca una opción para ver qué hace y otra vez para confirmar.</span></div>
+        <div><b>07 · NUEVOS ENEMIGOS</b><span>Plaga (rápida y numerosa), Saboteador (desactiva torres), Chamán (cura a los demás) y Espectro (resiste flechas y asedio: usa magia).</span></div>
       </div>
-      <p class="howto-keys">1–3 torres · Espacio oleada · P pausa · Q/E girar cámara · rueda zoom · clic derecho cancela</p>
+      <p class="howto-keys">1–3 torres · Z/X/C habilidades · Espacio oleada · P pausa · F velocidad ×2 · Q/E girar cámara · rueda zoom · clic derecho cancela · con una torre elegida: U mejorar · V vender · T objetivo</p>
     </div>
+  </div>
+  <div id="settingsPanel" role="dialog" aria-label="Ajustes">
+    <div class="set-card"><button id="closeSettings" class="close-modal" aria-label="Cerrar">×</button><h2>⚙ Ajustes</h2><div id="settingsBody"></div></div>
   </div>
   <header id="topbar">
     <div class="brand"><span class="brand-mark">⚔</span><div><strong>DEFENSA DEL CASTILLO</strong><small>Las Tierras del Eclipse</small></div></div>
@@ -53,13 +79,17 @@
     <div id="bossTag"><span>♛</span> JEFE EN CAMINO</div>
     <div id="speedControls">
       <button id="pauseBtn" class="iconBtn" title="Pausa">Ⅱ</button>
-      <button id="speedBtn" class="iconBtn" title="Velocidad x2">»</button>
+      <button id="speedBtn" class="iconBtn" title="Velocidad x2 (F)">»</button>
+      <button id="settingsBtn" class="iconBtn" title="Ajustes" aria-label="Ajustes">⚙</button>
       <button id="soundBtn" class="iconBtn" title="Silenciar" aria-label="Sonido" aria-pressed="false">♪</button>
     </div>
   </header>
 
   <main id="gameHost">
     <div class="map-vignette"></div>
+    <div id="bossBar"><div class="bb-top"><b id="bbName"></b><span id="bbPhase"></span></div><div class="bb-track"><i id="bbHp"></i><i id="bbShield"></i><span id="bbTicks"></span></div></div>
+    <div id="abilityBar" aria-label="Habilidades"></div>
+    <div id="saveChip">💾 PARTIDA GUARDADA</div>
     <div id="combatStatus" class="combat-status"><span class="status-dot"></span><span id="combatStatusText">DEFENSAS EN ESPERA</span></div>
     <div class="enemy-counter">ENEMIGOS <b id="enemyCount">0</b></div>
     <div id="pauseOverlay"><div><span>Ⅱ</span><strong>PAUSA</strong><small>El reino espera tu regreso · pulsa P o ▶ para continuar</small></div></div>
@@ -69,7 +99,7 @@
       <button id="zoomIn" class="iconBtn" title="Acercar" aria-label="Acercar">+</button>
       <button id="zoomOut" class="iconBtn" title="Alejar" aria-label="Alejar">−</button>
     </div>
-    <div id="msg"><div class="result-card"><div id="msgCrest">♛</div><div id="msgTitle"></div><p id="msgSubtitle"></p><div class="result-actions"><button id="continueBtn" hidden>SEGUIR EN MODO SIN FIN</button><button id="restartBtn">JUGAR DE NUEVO</button></div></div></div>
+    <div id="msg"><div class="result-card"><div id="msgCrest">♛</div><div id="msgTitle"></div><p id="msgSubtitle"></p><div id="resultStats" class="result-stats"></div><div class="result-actions"><button id="continueBtn" hidden>SEGUIR EN MODO SIN FIN</button><button id="restartBtn">JUGAR DE NUEVO</button></div></div></div>
   </main>
 
   <footer id="bottombar">
@@ -79,11 +109,14 @@
       <button class="tower-btn" id="towerArea" data-tower="area"><span class="tower-icon catapult">⚒</span><span><b>CATAPULTA</b><small>110 ✦</small></span></button>
       <button class="wave-btn" id="waveBtn" disabled><span>⚔</span><b id="waveBtnLabel">INICIAR OLEADA 1</b><small id="waveBtnHint">Prepárate para el ataque</small></button>
     </div>
-    <div class="keyboard-hint">1–3 TORRES · ESPACIO OLEADA · P PAUSA · Q/E CÁMARA · RUEDA ZOOM</div>
+    <div class="keyboard-hint">1–3 TORRES · Z X C HABILIDADES · ESPACIO OLEADA · P PAUSA · F ×2 · Q/E CÁMARA · RUEDA ZOOM</div>
     <div id="towerPanel">
       <div class="selected-tower-head"><span id="panelTowerIcon">♜</span><div><b id="panelTowerName">Torre</b><small id="towerPanelInfo"></small></div></div>
       <div class="panel-stats" id="panelStats"></div>
       <div id="towerPanelActions">
+        <button class="panel-btn target" id="targetBtn" title="Cambiar objetivo (T)"><b>OBJETIVO</b><small id="targetLabel">PRIMERO</small></button>
+        <button class="panel-btn spec" id="spec0" style="display:none"></button>
+        <button class="panel-btn spec" id="spec1" style="display:none"></button>
         <button class="panel-btn upgrade" id="upgradeBtn"><b>MEJORAR</b><small id="upgradeCost"></small></button>
         <button class="panel-btn sell" id="sellBtn"><b>VENDER</b><small id="sellValue"></small></button>
         <button class="panel-btn close" id="closeTowerPanel">×</button>
@@ -93,9 +126,21 @@
 </div>
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/music.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/engine3d.js"></script>
+<script src="js/v6.js"></script>
+<script src="js/v69.js"></script>
+<script src="js/v65.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/bosses.js"></script>
+<script src="js/skills.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/ambience.js"></script>
+<script src="js/save.js"></script>
 <script src="js/main.js"></script>
+<script>if("serviceWorker" in navigator && location.protocol !== "file:"){navigator.serviceWorker.register("sw.js").catch(()=>{});}</script>
 </body>
 </html>

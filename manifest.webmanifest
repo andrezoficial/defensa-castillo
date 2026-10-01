@@ -1,0 +1,18 @@
+{
+  "name": "Defensa del Castillo V6.9.1",
+  "short_name": "Defensa Castillo",
+  "description": "Tower defense 3D en las Tierras del Eclipse.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#120f0c",
+  "theme_color": "#120f0c",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
