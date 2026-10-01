@@ -97,7 +97,7 @@
       document.getElementById('v65CineIcon').textContent='♛';
       document.getElementById('v65CineTitle').textContent=(boss.name||'JEFE').toUpperCase();
       document.getElementById('v65CineSub').textContent='UNA AMENAZA SE ALZA ANTE EL CASTILLO';
-      cine.classList.remove('show');void cine.offsetWidth;cine.classList.add('show');
+      cine.classList.remove('show');void cine.offsetWidth;cine.classList.add('show');clearTimeout(cine._t);cine._t=setTimeout(()=>cine.classList.remove('show'),3000);
       if(typeof S!=='undefined')S.shake=Math.max(S.shake,3);
     }
     if(!boss&&bossWas){root.classList.remove('v65-boss');}

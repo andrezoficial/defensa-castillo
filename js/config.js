@@ -40,7 +40,7 @@ const ENEMY_TYPES = {
   goblin: { name: 'Ariete', color: 0x4caf50 },
   raider: { name: 'Balista Veloz', color: 0xd4af37 },
   ogre: { name: 'Torre de Asedio', color: 0x6a1b1b },
-  brute: { name: 'Zombi Bruto', color: 0x7fa85f },
+  brute: { name: 'Ogro Bruto', color: 0x7fa85f },
   swarm: { name: 'Plaga', color: 0xe0b341 },
   saboteur: { name: 'Saboteador', color: 0x6a6a96 },
   healer: { name: 'Chamán', color: 0x55d98a },

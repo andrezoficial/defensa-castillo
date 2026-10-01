@@ -222,3 +222,7 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 - **Adiós al amarillo al colocar**: casillas en cian claro (anillos finos), vista previa en menta (válido) o rojo (inválido), anillo de selección y de alcance en cian, niveles en blanco azulado y avisos en cristal oscuro.
 - **UI/UX**: barra inferior y panel de unidad en cristal, tarjetas de unidad con precio en píldora, selección con borde cian e indicador inferior, botón de oleada verde menta, iconos 🏹 🔮 ⚒. Todo en el bloque `V7` al final de `css/styles.css`.
 - Caché del service worker: `v7.0-assets`.
+
+## V7.4 — Avisos y ogros
+- **Letrero gigante**: con "reducir movimiento" activo (muy común en móvil/Windows), los avisos de oleada, jefe y presentación quedaban con `opacity:1` para siempre. Ahora se ocultan solos por JS (`v6.js`, `v65.js`) y se rediseñaron como píldoras pequeñas arriba, sin texto secundario y sin capturar toques.
+- **Ogro Bruto**: antes era un zombi escalado ×27 (según la variante parecía un zombi flaco); ahora usa el modelo `ogre.glb` (×54) con tinte verdoso. Mismos stats.

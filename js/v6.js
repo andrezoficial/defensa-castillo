@@ -93,7 +93,7 @@
       const box=root.querySelector('.v6-wave-intro');
       document.getElementById('v6WaveTitle').textContent=`OLEADA ${wave}`;
       document.getElementById('v6WaveSub').textContent=(wave%BOSS_WAVE_INTERVAL===0)?'UNA PRESENCIA GIGANTE SE ACERCA':'LAS FUERZAS ENEMIGAS ENTRAN EN EL CAMPO';
-      box.classList.remove('show');void box.offsetWidth;box.classList.add('show');
+      box.classList.remove('show');void box.offsetWidth;box.classList.add('show');clearTimeout(box._t);box._t=setTimeout(()=>box.classList.remove('show'),1900);
     }
     lastWave=wave;
   }
@@ -104,7 +104,7 @@
       const e=GameState.enemies.find(x=>x.isBoss&&!x.dead);const box=root.querySelector('.v6-boss-alert');
       document.getElementById('v6BossTitle').textContent=(e&&e.name||'JEFE').toUpperCase();
       document.getElementById('v6BossSub').textContent='LAS MURALLAS TEMBLAN · PREPÁRATE';
-      box.classList.remove('show');void box.offsetWidth;box.classList.add('show');
+      box.classList.remove('show');void box.offsetWidth;box.classList.add('show');clearTimeout(box._t);box._t=setTimeout(()=>box.classList.remove('show'),2400);
       document.getElementById('gameHost').classList.add('v6-boss-mode');
     }
     if(!boss&&lastBoss)document.getElementById('gameHost').classList.remove('v6-boss-mode');
