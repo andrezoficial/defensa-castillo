@@ -76,8 +76,8 @@
       GameState.towers.forEach((tw,i)=>{
         if(!tw.visual)return;
         const base=tw.visual.userData.v65BaseY??0;tw.visual.userData.v65BaseY=base;
-        tw.visual.position.y=base+Math.sin(t*1.6+i*.7)*.8;
-        if(tw.fig){tw.fig.rotation.z=Math.sin(t*1.8+i)*.025;tw.fig.position.y=(tw.type==='slow'?41:43)+Math.sin(t*2+i)*.6;}
+        if(tw.type==='area')tw.visual.position.y=base+Math.sin(t*1.6+i*.7)*.8;
+        if(tw.fig){tw.fig.position.y=0;}
       });
       GameState.enemies.forEach((e,i)=>{
         if(!e.mesh||e.dead)return;

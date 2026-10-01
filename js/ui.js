@@ -2,7 +2,7 @@
 // La lógica de juego vive en engine3d.js; este archivo solo muestra el estado y recoge eventos.
 
 const $ = (id) => document.getElementById(id);
-const TOWER_ICONS = { basic: '♜', slow: '✧', area: '⚒' };
+const TOWER_ICONS = { basic: '🏹', slow: '🔮', area: '⚒' };
 
 /* ---------- HUD ---------- */
 

@@ -231,3 +231,32 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}#
 #gameHost.v65-boss canvas{filter:saturate(1.14) contrast(1.06)}#gameHost.v65-boss #v6Layer{filter:saturate(1.12)}#gameHost.v65-boss .v65-sky-glow{background:radial-gradient(circle at 50% 40%,rgba(255,90,60,.18),transparent 35%),radial-gradient(circle at 70% 20%,rgba(100,110,255,.12),transparent 35%)}
 @media(max-width:760px){.v65-moon{width:48px;height:48px;right:6%;top:13%}.v65-cinematic{min-width:230px;padding:12px 20px}.v65-cinematic b{font-size:17px;letter-spacing:2px}.v65-cinematic small{font-size:6px}}
 @media(prefers-reduced-motion:reduce){.v65-weather-glass{animation:none}.v65-cinematic.show{animation:none;opacity:1}.v65-sky-glow{transition:none}}
+
+/* ===== V7 · UI/UX: acento frío (cian) en selección y colocación, paneles de cristal ===== */
+:root{--acc:#6fd8ff;--acc2:#bfeaff;--ok:#5be3b0;--bad:#ff6b6b;--glass:rgba(14,20,28,.78);--glass-line:rgba(255,255,255,.1)}
+#bottombar{background:linear-gradient(180deg,rgba(18,24,33,.92),rgba(8,11,16,.96));border-top:1px solid var(--glass-line);backdrop-filter:blur(14px)}
+#bottombar:before,#topbar:after{background:linear-gradient(90deg,transparent,#6fd8ff55,transparent)}
+#buildButtons{gap:10px}
+.tower-btn{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02))!important;border:1px solid var(--glass-line)!important;border-radius:14px!important;box-shadow:0 4px 14px #0007!important;padding:8px 12px!important}
+.tower-btn:hover{border-color:#6fd8ff88!important;background:linear-gradient(180deg,rgba(111,216,255,.14),rgba(111,216,255,.04))!important}
+.tower-btn.selected{background:linear-gradient(180deg,rgba(111,216,255,.24),rgba(111,216,255,.08))!important;border-color:var(--acc)!important;box-shadow:0 0 0 1px var(--acc),0 8px 24px rgba(111,216,255,.28)!important;transform:translateY(-4px)!important}
+.tower-btn.selected:after{content:"";position:absolute;left:50%;bottom:-7px;width:26px;height:3px;margin-left:-13px;border-radius:3px;background:var(--acc);box-shadow:0 0 10px var(--acc)}
+.tower-icon{width:40px!important;height:40px!important;border-radius:12px!important;font-size:22px!important;background:rgba(255,255,255,.08)!important;border:1px solid var(--glass-line)!important;box-shadow:none!important}
+.tower-btn b{font-size:11px!important;letter-spacing:1px!important;color:#f2f7fb}
+.tower-btn small{display:inline-block!important;margin-top:5px!important;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.1);color:#fff!important;font-weight:800}
+.tower-btn.poor small{background:rgba(255,107,107,.18);color:#ffb0b0!important}
+.wave-btn{border-radius:14px!important;background:linear-gradient(180deg,#2f8f6e,#1d5f49)!important;border:1px solid #5be3b0aa!important;box-shadow:0 6px 20px rgba(91,227,176,.25)!important}
+.wave-btn span{color:#eafff6!important}.wave-btn small{color:#bfeadb!important}
+.wave-btn:disabled{background:linear-gradient(180deg,#2b3340,#1c222b)!important;border-color:var(--glass-line)!important;box-shadow:none!important}
+@keyframes readyPulse{50%{box-shadow:0 0 24px rgba(91,227,176,.5)}}
+#towerPanel{background:var(--glass)!important;border:1px solid var(--glass-line)!important;border-radius:16px!important;box-shadow:0 18px 45px #000a!important}
+.selected-tower-head>span{border-radius:12px!important;background:rgba(255,255,255,.08)!important;border:1px solid var(--glass-line)!important;font-size:24px!important}
+.panel-btn{border-radius:12px!important;background:rgba(255,255,255,.06)!important;border:1px solid var(--glass-line)!important;color:#eaf3fa!important}
+.panel-btn small{color:var(--acc2)!important}
+.panel-btn.upgrade{background:linear-gradient(180deg,rgba(91,227,176,.28),rgba(91,227,176,.1))!important;border-color:#5be3b0aa!important}
+.panel-btn.sell{border-color:#ff6b6b66!important}.panel-btn.sell small{color:#ffb0b0!important}
+.panel-btn.target{border-color:#6fd8ff66!important}
+.panel-stat b{color:#fff!important}.panel-stat .pips{color:var(--acc)!important}
+.iconBtn{border-radius:12px!important;background:rgba(255,255,255,.07)!important;border:1px solid var(--glass-line)!important;color:#eaf3fa!important}
+.iconBtn.active{border-color:var(--acc)!important;box-shadow:0 0 12px rgba(111,216,255,.4)!important}
+@media(max-width:600px){.tower-icon{width:32px!important;height:32px!important;font-size:18px!important}.tower-btn small{padding:1px 6px}}

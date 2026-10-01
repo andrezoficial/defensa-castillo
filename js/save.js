@@ -24,7 +24,7 @@ const Save = (() => {
   function restoreTower(r) {
     const m = towerModel(r.type);
     m.g.position.set(r.x, 0, r.y); scene.add(m.g);
-    const rg = flat(new THREE.Mesh(geo('Ring', 0.97, 1, 64), tmat(0xf1d38b, 0.6)));
+    const rg = flat(new THREE.Mesh(geo('Ring', 0.97, 1, 64), tmat(0x9fe3ff, 0.5)));
     rg.position.set(r.x, 1.8, r.y); rg.visible = false; scene.add(rg);
     const t = { x: r.x, y: r.y, type: r.type, mode: TARGET_MODES.includes(r.mode) ? r.mode : 'first', lastShot: 0, visual: m.g, range: rg, level: r.level, invested: r.invested, top: m.top, fig: m.fig };
     GameState.towers.push(t);

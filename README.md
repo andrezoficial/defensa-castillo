@@ -215,3 +215,10 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 - **Solani**: escala corregida a `13.3` (antes `0.065`, ~0,4 de alto).
 - **Brillo propio**: el destello de daño/hielo/fuego suma sobre el emisivo base del material (`js/fx.js`).
 - **Service worker**: caché `v6.9.4`.
+
+## V7.0 — Solo personajes y UI renovada
+
+- **Sin torres**: arqueros y hechicero se colocan como personaje solo, de pie en el suelo y con una sombra suave. Ya no flotan ni se balancean: manda la animación real. La catapulta conserva su modelo. Los puntos de disparo (`top`) bajaron para que proyectiles y rayos salgan de la mano del personaje.
+- **Adiós al amarillo al colocar**: casillas en cian claro (anillos finos), vista previa en menta (válido) o rojo (inválido), anillo de selección y de alcance en cian, niveles en blanco azulado y avisos en cristal oscuro.
+- **UI/UX**: barra inferior y panel de unidad en cristal, tarjetas de unidad con precio en píldora, selección con borde cian e indicador inferior, botón de oleada verde menta, iconos 🏹 🔮 ⚒. Todo en el bloque `V7` al final de `css/styles.css`.
+- Caché del service worker: `v7.0-assets`.

@@ -1,4 +1,4 @@
-const CACHE = "defensa-castillo-v6.9.4-assets";
+const CACHE = "defensa-castillo-v7.0-assets";
 const CORE = ["./", "./index.html", "./css/styles.css", "./js/config.js", "./js/state.js", "./js/settings.js", "./js/audio.js", "./js/music.js", "./js/ui.js", "./js/engine3d.js", "./js/v6.js", "./js/v65.js", "./js/v69.js", "./js/fx.js", "./js/bosses.js", "./js/skills.js", "./js/progress.js", "./js/ambience.js", "./js/save.js", "./js/main.js", "./js/vendor/three.min.js", "./js/vendor/GLTFLoader.js", "./manifest.webmanifest", "./assets/models/archer.glb", "./assets/models/wizard.glb", "./assets/models/catapult.glb", "./assets/models/goblin.glb", "./assets/models/zombie.glb", "./assets/models/wyvern.glb", "./assets/models/raider.glb", "./assets/models/ogre.glb", "./assets/models/solani.glb", "./assets/models/castle.glb", "./icon.svg"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));

@@ -27,7 +27,7 @@ function distToPath(px,py){let min=Infinity;for(let i=0;i<PATH_POINTS.length-1;i
 const partPool=[];
 function burst(x,y,z,color,n,spd){if(S.fx.length>300)n=Math.ceil(n/3);for(let i=0;i<n;i++){const m=partPool.pop()||new THREE.Mesh(geo('Sphere',1.6,6,6),bmat(color));m.material=bmat(color);m.scale.setScalar(1);m.position.set(x,y,z);scene.add(m);const a=Math.random()*6.28,v=spd*(.5+Math.random()),vy=spd*(.6+Math.random()),dur=400+Math.random()*250;addFx(dur,p=>{const t=p*dur/1000;m.position.set(x+Math.cos(a)*v*t,y+vy*t-140*t*t,z+Math.sin(a)*v*t);m.scale.setScalar(Math.max(.01,1-p))},()=>{scene.remove(m);partPool.push(m)})}}
 function ringFx(x,z,color,r,ms,y=2){const m=flat(new THREE.Mesh(geo('Ring',.8,1,32),tmat(color,.7)));m.position.set(x,y,z);scene.add(m);addFx(ms,p=>{m.scale.setScalar(4+r*p);m.material.opacity=.7*(1-p)},()=>{scene.remove(m);m.material.dispose()})}
-function toast(text,big){const d=document.createElement('div');d.textContent=text;d.style.cssText=`position:absolute;left:50%;top:${big?'14%':'22%'};transform:translate(-50%,0) scale(.8);opacity:0;z-index:6;pointer-events:none;font:700 ${big?18:12}px Cinzel,serif;color:#f1d38b;background:#21150ee8;border:1px solid #c59a4b;padding:10px 22px;text-shadow:0 2px 3px #120c08;transition:all .3s;white-space:nowrap`;host.appendChild(d);requestAnimationFrame(()=>{d.style.opacity=1;d.style.transform='translate(-50%,0) scale(1)'});setTimeout(()=>{d.style.opacity=0;d.style.transform='translate(-50%,-16px)'},big?1200:1000);setTimeout(()=>d.remove(),1800)}
+function toast(text,big){const d=document.createElement('div');d.textContent=text;d.style.cssText=`position:absolute;left:50%;top:${big?'14%':'22%'};transform:translate(-50%,0) scale(.8);opacity:0;z-index:6;pointer-events:none;font:700 ${big?18:12}px Cinzel,serif;color:#e8f6ff;background:#0d1620ea;border:1px solid #5fd4ff55;border-radius:12px;backdrop-filter:blur(8px);box-shadow:0 8px 24px #0008;padding:10px 20px;text-shadow:0 1px 2px #000;transition:all .3s;white-space:nowrap`;host.appendChild(d);requestAnimationFrame(()=>{d.style.opacity=1;d.style.transform='translate(-50%,0) scale(1)'});setTimeout(()=>{d.style.opacity=0;d.style.transform='translate(-50%,-16px)'},big?1200:1000);setTimeout(()=>d.remove(),1800)}
 const showWaveBanner=t=>toast(t,true), showRewardToast=t=>toast(t,false);
 
 /* ---------- Mundo ---------- */
@@ -54,13 +54,13 @@ function buildWorld(){
   mergeStatic();
   buildCastle();
   // casillas, vista previa y selección
-  GameState.buildSlots=computeBuildSlots();const sm=tmat(0xf1d38b,.55),dm=new THREE.Object3D();dm.rotation.x=-Math.PI/2;
-  S.slots=new THREE.InstancedMesh(geo('Ring',5,8,20),sm,GameState.buildSlots.length);S.slots.frustumCulled=false;S.slots.visible=false;scene.add(S.slots);
+  GameState.buildSlots=computeBuildSlots();const sm=tmat(0xbfeaff,.5),dm=new THREE.Object3D();dm.rotation.x=-Math.PI/2;
+  S.slots=new THREE.InstancedMesh(geo('Ring',3.4,5,24),sm,GameState.buildSlots.length);S.slots.frustumCulled=false;S.slots.visible=false;scene.add(S.slots);
   S.slotOn=GameState.buildSlots.map(sl=>{dm.position.set(sl.x,1.6,sl.y);dm.updateMatrix();return dm.matrix.clone()});S.slotOff=new THREE.Matrix4().makeScale(0,0,0);
   const pv=S.prev=new THREE.Group();pv.visible=false;scene.add(pv);
-  pv.rng=flat(new THREE.Mesh(geo('Ring',.97,1,64),tmat(0x8fb56b,.75)));pv.fill=flat(new THREE.Mesh(geo('Circle',1,48),tmat(0x8fb56b,.12)));
-  pv.col=new THREE.Mesh(geo('Cylinder',14,14,36,20),tmat(0x8fb56b,.35));pv.rng.position.y=pv.fill.position.y=1.8;pv.col.position.y=18;pv.add(pv.rng,pv.fill,pv.col);
-  S.sel=flat(new THREE.Mesh(geo('Ring',20,23,32),tmat(0xe7bd5b,.9)));S.sel.visible=false;scene.add(S.sel);
+  pv.rng=flat(new THREE.Mesh(geo('Ring',.97,1,64),tmat(0x5be3b0,.85)));pv.fill=flat(new THREE.Mesh(geo('Circle',1,48),tmat(0x5be3b0,.12)));
+  pv.col=new THREE.Mesh(geo('Cylinder',7,7,36,20),tmat(0x5be3b0,.3));pv.rng.position.y=pv.fill.position.y=1.8;pv.col.position.y=18;pv.add(pv.rng,pv.fill,pv.col);
+  S.sel=flat(new THREE.Mesh(geo('Ring',20,23,32),tmat(0x6fd8ff,.9)));S.sel.visible=false;scene.add(S.sel);
   initSkills4();
   Ambience.init();
 }
@@ -108,11 +108,10 @@ function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),m=cloneMo
   if(k==='zombie'){const vi=zv!=null?zv:Math.floor(Math.random()*10),v=pickZombie(m,vi);fx=[-v[1],0,-v[2]];g.userData.zv=vi}
   if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(window.V69Animations)window.V69Animations.attach(g,k);return g}
 function towerModel(type){const g=new THREE.Group();let top,fig;
-  if(type==='basic'){part(g,'Box',[28,4,28],0x8a877e,0,2);part(g,'Box',[20,34,20],0xb5b1a5,0,21);part(g,'Box',[28,5,28],0xa19d92,0,40.5);
-    for(const sx of[-1,1])for(const sz of[-1,1])part(g,'Box',[5,5,5],0xa19d92,sx*11,45.5,sz*11);
-    fig=inst('archer',16.5);fig.position.y=43;g.add(fig);top=60}
-  else if(type==='slow'){part(g,'Cylinder',[15,17,4,6],0x8a877e,0,2);part(g,'Cylinder',[10.5,13,34,6],0x6c86ad,0,21);part(g,'Cylinder',[14,14,3,6],0x54698c,0,39.5);
-    fig=inst('wizard',16);fig.position.y=41;g.add(fig);top=66}
+  // V7: sin torres, solo el personaje sobre el suelo con una sombra suave
+  const sh=flat(new THREE.Mesh(geo('Circle',1,24),tmat(0x000000,.28)));sh.position.y=1.4;sh.scale.setScalar(type==='area'?22:12);g.add(sh);
+  if(type==='basic'){fig=inst('archer',21);g.add(fig);top=38}
+  else if(type==='slow'){fig=inst('wizard',20);g.add(fig);top=40}
   else{g.add(inst('catapult',38));top=30}
   return{g,top,fig}}
 const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
@@ -201,11 +200,11 @@ function nearestSlot(x,y){let best=null,bd=Infinity;for(const s of GameState.bui
 function isValidPlacement(gx,gy,type){const d=TOWER_DEFS[type];return !!d&&GameState.gold>=d.cost&&!isCellOccupied(gx,gy)}
 function showBuildGrid(){S.slots.visible=true;GameState.buildSlots.forEach((sl,i)=>S.slots.setMatrixAt(i,isCellOccupied(sl.x,sl.y)?S.slotOff:S.slotOn[i]));S.slots.instanceMatrix.needsUpdate=true}
 function hideBuildGrid(){S.slots.visible=false}
-function drawPlacementPreview(x,y){if(!GameState.selectedTower)return;GameState.placementX=x;GameState.placementY=y;const d=TOWER_DEFS[GameState.selectedTower],sl=nearestSlot(x,y),ok=sl&&isValidPlacement(sl.x,sl.y,GameState.selectedTower),c=ok?0x8fb56b:0xd34d46,p=sl||{x,y},r=sl?d.range:18,pv=S.prev;
+function drawPlacementPreview(x,y){if(!GameState.selectedTower)return;GameState.placementX=x;GameState.placementY=y;const d=TOWER_DEFS[GameState.selectedTower],sl=nearestSlot(x,y),ok=sl&&isValidPlacement(sl.x,sl.y,GameState.selectedTower),c=ok?0x5be3b0:0xff6b6b,p=sl||{x,y},r=sl?d.range:18,pv=S.prev;
   pv.visible=true;pv.position.set(p.x,0,p.y);[pv.rng,pv.fill,pv.col].forEach(o=>o.material.color.setHex(c));pv.rng.scale.set(r,r,1);pv.fill.scale.set(r,r,1);pv.col.visible=!!sl}
 function clearPlacementPreview(){S.prev.visible=false;if(S.skPrev)S.skPrev.visible=false;GameState.placementDragging=false;GameState.placementPointerId=null}
 function applyScale(t){t.visual.scale.setScalar((1+.07*(t.level-1))*(t.hl?1.06:1))}
-function updateLevelPips(t){if(t.pips)scene.remove(t.pips);const g=new THREE.Group(),sp=specOf(t),col=sp?sp.color:0xe7bd5b;g.position.set(t.x,3,t.y+18);for(let i=0;i<t.level;i++){const m=new THREE.Mesh(geo('Sphere',2.6,8,8),bmat(col));m.position.x=(i-(t.level-1)/2)*8;g.add(m)}scene.add(g);t.pips=g}
+function updateLevelPips(t){if(t.pips)scene.remove(t.pips);const g=new THREE.Group(),sp=specOf(t),col=sp?sp.color:0xcfefff;g.position.set(t.x,3,t.y+18);for(let i=0;i<t.level;i++){const m=new THREE.Mesh(geo('Sphere',2.6,8,8),bmat(col));m.position.x=(i-(t.level-1)/2)*8;g.add(m)}scene.add(g);t.pips=g}
 function selectPlacedTower(t){GameState.selectedTower=null;GameState.selectedSkill=null;if(S.skPrev)S.skPrev.visible=false;t.specPending=null;syncBuildButtons();hideBuildGrid();clearPlacementPreview();
   if(GameState.selectedPlacedTower&&GameState.selectedPlacedTower!==t)highlightTower(GameState.selectedPlacedTower,false);
   GameState.selectedPlacedTower=t;showTowerPanel(t);highlightTower(t,true);sfx.click()}
@@ -219,12 +218,12 @@ function placeTower(x,y){if(!GameState.selectedTower)return;const type=GameState
   if(GameState.gold<d.cost){sfx.deny();showRewardToast(`Oro insuficiente · faltan ${d.cost-GameState.gold} ✦`);return}
   const {x:tx,y:ty}=slot;GameState.gold-=d.cost;updateHUD();
   const m=towerModel(type);m.g.position.set(tx,0,ty);scene.add(m.g);
-  const rg=flat(new THREE.Mesh(geo('Ring',.97,1,64),tmat(0xf1d38b,.6)));rg.position.set(tx,1.8,ty);rg.scale.set(d.range,d.range,1);rg.visible=false;scene.add(rg);
+  const rg=flat(new THREE.Mesh(geo('Ring',.97,1,64),tmat(0x9fe3ff,.5)));rg.position.set(tx,1.8,ty);rg.scale.set(d.range,d.range,1);rg.visible=false;scene.add(rg);
   const t={x:tx,y:ty,type,mode:'first',lastShot:0,visual:m.g,range:rg,level:1,invested:d.cost,top:m.top,fig:m.fig};GameState.towers.push(t);updateLevelPips(t);
-  addFx(300,p=>m.g.scale.setScalar(Math.max(.01,easeBack(p))),()=>applyScale(t));ringFx(tx,ty,0xc2a36d,26,350);sfx.place();showBuildGrid()}
+  addFx(300,p=>m.g.scale.setScalar(Math.max(.01,easeBack(p))),()=>applyScale(t));burst(tx,4,ty,0xb9ad98,6,26);sfx.place();clearSelection()}
 function upgradeTower(t){if(t.level>=MAX_TOWER_LEVEL)return;const cost=getUpgradeCost(t.type,t.level);
   if(GameState.gold<cost){sfx.deny();showRewardToast(`Oro insuficiente · faltan ${cost-GameState.gold} ✦`);return}
-  GameState.gold-=cost;t.invested+=cost;t.level++;updateHUD();updateLevelPips(t);applyScale(t);const r=getEffectiveStats(t).range;t.range.scale.set(r,r,1);refreshTowerPanel(t);ringFx(t.x,t.y,0xe7bd5b,40,400);burst(t.x,20,t.y,0xe7bd5b,10,40);sfx.upgrade()}
+  GameState.gold-=cost;t.invested+=cost;t.level++;updateHUD();updateLevelPips(t);applyScale(t);const r=getEffectiveStats(t).range;t.range.scale.set(r,r,1);refreshTowerPanel(t);ringFx(t.x,t.y,0x7fe3ff,40,400);burst(t.x,20,t.y,0x7fe3ff,10,40);sfx.upgrade()}
 function sellTower(t){GameState.gold+=Math.round(t.invested*SELL_REFUND_RATIO);updateHUD();scene.remove(t.visual,t.range);t.range.material.dispose();if(t.pips)scene.remove(t.pips);disposeTowerExtras(t);GameState.towers=GameState.towers.filter(x=>x!==t);deselectPlacedTower();sfx.sell();if(GameState.selectedTower)showBuildGrid()}
 function selectTower(type){if(!canAct())return;GameState.selectedSkill=null;deselectPlacedTower();clearPlacementPreview();GameState.selectedTower=GameState.selectedTower===type?null:type;syncBuildButtons();sfx.click();if(GameState.selectedTower)showBuildGrid();else hideBuildGrid()}
 function hitSlow(t,e,d){const sp=d.spec;if(e.isBoss&&!(sp&&sp.slowBoss))return;
