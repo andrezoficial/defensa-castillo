@@ -11,7 +11,7 @@ const GAME_HEIGHT = 500;
 // El castillo está siempre en (775,150): todos los caminos terminan ahí.
 const MAPS = {
   valle: { id: 'valle', name: 'Valle del Alba', desc: 'El camino clásico. Ideal para aprender.', hp: 1, crown: 1, gold: 0, unlock: null,
-    ground: 0x3f6b2c, far: 0x2f5222, patches: [0x4a7a35, 0x35591f, 0x548540], pathCol: [0x5c4a2e, 0x9a7a4c],
+    ground: 0x5f9a3c, far: 0x4c8030, patches: [0x72ad46, 0x4f8a31, 0x86bf55], pathCol: [0x5c4a2e, 0x9a7a4c],
     path: [{ x: -20, y: 250 }, { x: 150, y: 250 }, { x: 150, y: 80 }, { x: 420, y: 80 }, { x: 420, y: 430 }, { x: 660, y: 430 }, { x: 660, y: 150 }, { x: 840, y: 150 }] },
   paso: { id: 'paso', name: 'Paso del Eclipse', desc: 'Camino largo y sinuoso. Enemigos +20 % de vida, +50 oro iniciales y coronas ×1,5.', hp: 1.2, crown: 1.5, gold: 50, unlock: 'valle',
     ground: 0x4d4a58, far: 0x34313f, patches: [0x5a5668, 0x44414f, 0x625e72], pathCol: [0x3a3340, 0x7d6f8a],

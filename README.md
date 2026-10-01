@@ -241,3 +241,12 @@ Los modelos de las torres de **arqueros** y **hechicero** (`assets/models/archer
 
 
 V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 variantes 3D y texturas optimizadas para web.
+
+## V8.4 — Mapa más claro
+- Árboles: material corregido (hojas visibles y verdes, pinos más claros).
+- Valle del Alba: pasto y fondo más claros.
+- Se quitó el «Mapa táctico» (repetía el mapa y tapaba el castillo).
+- Panel REINO: la sección de mapas ahora se llama «Elegir mapa» y explica cómo se desbloquean.
+
+## V8.5 — Pausa en el celular
+- La pantalla de PAUSA ahora se puede tocar para continuar y tiene un botón grande «▶ CONTINUAR» (antes solo reanudaba el botón pequeño de arriba o la tecla P, que no existe en el celular).

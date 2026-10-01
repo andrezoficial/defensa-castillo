@@ -313,6 +313,16 @@ function bindUIEvents() {
   });
   $('closeTowerPanel').addEventListener('click', deselectPlacedTower);
   $('pauseBtn').addEventListener('click', togglePause);
+  // V8.5: en el celular no hay tecla P; tocar la pantalla de pausa (o el botón grande) reanuda.
+  const resumeFromOverlay = (e) => {
+    if (!GameState.paused) return;
+    const sp = document.getElementById('settingsPanel');
+    if (sp && sp.classList.contains('open')) return; // pausa del panel de ajustes: la cierra el panel
+    e.preventDefault(); e.stopPropagation();
+    togglePause();
+  };
+  $('pauseOverlay').addEventListener('click', resumeFromOverlay);
+  $('resumeBtn').addEventListener('click', resumeFromOverlay);
   $('speedBtn').addEventListener('click', toggleSpeed);
   $('soundBtn').addEventListener('click', toggleSound);
 

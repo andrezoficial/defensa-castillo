@@ -1,10 +1,14 @@
 // engine3d.js — Motor 3D (Three.js). Conserva el mapa 2D: x→X, y→Z (1 px = 1 unidad).
 const host=document.getElementById('gameHost');
-const S={running:false,now:0,fx:[],timers:[],shake:0,az:0,zoom:1,u:1,last:0,baz:0,dist:900,slots:null,prev:null,sel:null,eid:0,slow:0,skPrev:null,fl:null,scorch:[],pops:0};
+const S={running:false,now:0,fx:[],timers:[],shake:0,az:0,zoom:1,u:1,last:0,baz:0,dist:900,centerX:400,centerZ:250,slots:null,prev:null,sel:null,eid:0,slow:0,skPrev:null,fl:null,scorch:[],pops:0,pan:null};
 GameState.scene=S;
 const gc={},mc={},bc={};
 // Dispositivo táctil / pantalla pequeña: sombras y resolución más ligeras.
 S.lowPower=(window.matchMedia&&matchMedia('(pointer:coarse)').matches)||Math.min(innerWidth,innerHeight)<600;
+// En celulares, el ajuste automático para mostrar todo el mapa deja la cámara demasiado lejos.
+// Acercamos la cámara un 28% solo en pantallas táctiles pequeñas; PC conserva exactamente su distancia.
+S.mobileCam=!!(navigator.maxTouchPoints>0&&Math.min(innerWidth,innerHeight)<=900);
+S.mobileCamMul=S.mobileCam?.72:1;
 S.prMax=Math.min(window.devicePixelRatio||1,S.lowPower?1.5:2);S.prMin=.6;S.pr=S.prMax;S.acc=0;S.n=0;S.bad=0;S.lastRender=0;
 const geo=(k,...a)=>gc[k+a]||(gc[k+a]=new THREE[k+'Geometry'](...a));
 const mat=c=>mc[c]||(mc[c]=new THREE.MeshLambertMaterial({color:c}));
@@ -214,10 +218,17 @@ function addNatureTreeInstance(src,x,z,scale,rot,shadow){
     o.castShadow=shadow;
     o.receiveShadow=true;
     o.frustumCulled=true;
-    if(o.material && o.material.transparent){
-      o.material.alphaTest=Math.max(o.material.alphaTest||0,.45);
-      o.material.depthWrite=true;
-    }
+    // Material simple y claro: los PBR del kit salían casi negros con esta iluminación.
+    const fix=m=>{
+      if(!m||!m.map) return m;
+      if(m.userData&&m.userData.treeFix) return m;
+      if(THREE.sRGBEncoding) m.map.encoding=THREE.sRGBEncoding;
+      m.map.anisotropy=Math.min(4,m.map.anisotropy||4);
+      const leaf=/leaf|leaves/i.test(m.name||'');
+      const pine=/pine/i.test(m.name||'');const n=new THREE.MeshLambertMaterial({map:m.map,side:THREE.DoubleSide,alphaTest:leaf?.1:.2,color:leaf?(pine?0xb8f08a:0xe6ffb8):0xffffff,emissive:leaf?(pine?0x2a5a1c:0x2f5f1c):0x1a0f08});
+      n.userData={treeFix:true};n.name=m.name;return n;
+    };
+    o.material=Array.isArray(o.material)?o.material.map(fix):fix(o.material);
   });
   scene.add(g);
 }
@@ -512,20 +523,22 @@ function updateTowers(time){const fury=time<GameState.furyUntil?SKILL_DEFS.fury.
 /* ---------- Cámara, entrada y bucle ---------- */
 function fitPortrait(){/* Móvil vertical: busca la distancia a la que el mapa proyectado llena el ancho (y cabe en alto). */
 const el=.96,c=Math.cos(el),A=-Math.PI/2,pts=[[0,0,0],[800,0,0],[0,0,500],[800,0,500],[40,70,0],[40,70,500]],pr=new THREE.Vector3();
-const ext=d=>{cam.position.set(400+Math.sin(A)*c*d,Math.sin(el)*d,255+Math.cos(A)*c*d);cam.lookAt(400,0,255);cam.updateMatrixWorld(true);cam.matrixWorldInverse.copy(cam.matrixWorld).invert();let ex=0,ey=0;for(const q of pts){pr.set(q[0],q[1],q[2]).project(cam);ex=Math.max(ex,Math.abs(pr.x));ey=Math.max(ey,Math.abs(pr.y))}return[ex,ey]};
+const ext=d=>{cam.position.set(400+Math.sin(A)*c*d,Math.sin(el)*d,255+Math.cos(A)*c*d);cam.lookAt(400,0,255);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);cam.matrixWorldInverse.copy(cam.matrixWorld).invert();let ex=0,ey=0;for(const q of pts){pr.set(q[0],q[1],q[2]).project(cam);ex=Math.max(ex,Math.abs(pr.x));ey=Math.max(ey,Math.abs(pr.y))}return[ex,ey]};
 let d=1000;for(let i=0;i<8;i++){const[ex,ey]=ext(d);d*=Math.max(ex/.97,ey/.9)**.9}return d}
-function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=v?-Math.PI/2:0;S.dist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600;
+function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=S.bazInitial??(S.baz=v?-Math.PI/2:0);S.dist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*S.zoom*S.mobileCamMul;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600;
   /* Móvil: personajes más grandes para que se distingan (vertical x1.5, horizontal bajo x1.25) */
   S.u=v?(w<=520?1.5:1.3):(h<420?1.25:1);
   for(const t of GameState.towers){t.top0=t.top0||t.top;t.top=t.top0*S.u;applyScale(t)}}
-function placeCam(){const el=.96,c=Math.cos(el),d=S.dist,j=()=>(Math.random()-.5)*S.shake*Settings.shakeMul();const A=S.baz+S.az;cam.position.set(400+Math.sin(A)*c*d+j(),Math.sin(el)*d+j(),255+Math.cos(A)*c*d);cam.lookAt(400,0,255);S.shake=S.shake<.05?0:S.shake*.88}
+function clampCenter(){const margin=Math.max(30,S.dist*.28);S.centerX=Math.max(margin,Math.min(GAME_WIDTH-margin,S.centerX));S.centerZ=Math.max(margin,Math.min(GAME_HEIGHT-margin,S.centerZ));}
+function placeCam(){const el=.96,c=Math.cos(el),d=S.dist,j=()=>(Math.random()-.5)*S.shake*Settings.shakeMul();const A=S.baz+S.az;clampCenter();cam.position.set(S.centerX+Math.sin(A)*c*d+j(),Math.sin(el)*d+j(),S.centerZ+Math.cos(A)*c*d);cam.lookAt(S.centerX,0,S.centerZ);S.shake=S.shake<.05?0:S.shake*.88}
 const ray=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();
-function groundAt(e){const r=host.getBoundingClientRect();v2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(v2,cam);return ray.ray.intersectPlane(gp,hit)?{x:Math.min(GAME_WIDTH,Math.max(0,hit.x)),y:Math.min(GAME_HEIGHT,Math.max(0,hit.z))}:null}
+function groundPointAt(e){const r=host.getBoundingClientRect();v2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(v2,cam);return ray.ray.intersectPlane(gp,hit)?{x:hit.x,y:hit.z}:null}
+function groundAt(e){const p=groundPointAt(e);return p?{x:Math.min(GAME_WIDTH,Math.max(0,p.x)),y:Math.min(GAME_HEIGHT,Math.max(0,p.y))}:null}
 function rotateCam(dir){S.az=Math.max(-1.2,Math.min(1.2,S.az+dir*.15))}
 function zoomCam(f){S.zoom=Math.min(1.2,Math.max(.4,S.zoom*f));fit()}
 function bindInput(){
   host.style.touchAction='none';
-  const ignore=e=>e.target.closest('#msg,#howToPanel,#camControls,#abilityBar,#bossBar');
+  const ignore=e=>e.target.closest('#msg,#howToPanel,#camControls,#abilityBar,#bossBar,#towerPanel');
   const inside=e=>{const r=host.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom};
   host.addEventListener('pointerdown',e=>{if(ignore(e)||!canAct())return;
     if(e.pointerType==='mouse'&&e.button===2){clearSelection();return}
@@ -533,12 +546,37 @@ function bindInput(){
     const p=groundAt(e);if(!p)return;
     if(GameState.selectedSkill){GameState.placementDragging=true;GameState.placementPointerId=e.pointerId;try{host.setPointerCapture(e.pointerId)}catch(_){}drawSkillPreview(p.x,p.y);return}
     if(GameState.selectedTower){GameState.placementDragging=true;GameState.placementPointerId=e.pointerId;try{host.setPointerCapture(e.pointerId)}catch(_){}drawPlacementPreview(p.x,p.y);return}
+
+    // En móvil, un toque selecciona; un arrastre mueve la cámara sin rotarla.
+    if(e.pointerType==='touch'&&S.mobileCam){
+      S.pan={pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false,hit:p};
+      try{host.setPointerCapture(e.pointerId)}catch(_){}
+      return;
+    }
     const t=findTowerAt(p.x,p.y);if(t)selectPlacedTower(t);else deselectPlacedTower()});
-  host.addEventListener('pointermove',e=>{if(!(GameState.selectedTower||GameState.selectedSkill)||!canAct())return;if(GameState.placementDragging?e.pointerId!==GameState.placementPointerId:e.pointerType!=='mouse')return;const p=groundAt(e);if(p){if(GameState.selectedSkill)drawSkillPreview(p.x,p.y);else drawPlacementPreview(p.x,p.y)}});
-  host.addEventListener('pointerup',e=>{if(!(GameState.selectedTower||GameState.selectedSkill)||!GameState.placementDragging||e.pointerId!==GameState.placementPointerId)return;
-    // soltar fuera del mapa cancela la colocación
+  host.addEventListener('pointermove',e=>{
+    if(S.pan&&e.pointerId===S.pan.pointerId){
+      const dx=e.clientX-S.pan.lastX,dy=e.clientY-S.pan.lastY;
+      if(Math.hypot(e.clientX-S.pan.startX,e.clientY-S.pan.startY)>8)S.pan.moved=true;
+      if(S.pan.moved){
+        // Mantiene el punto bajo el dedo: mueve el centro del mapa, no el ángulo de cámara.
+        const before=groundPointAt({clientX:e.clientX,clientY:e.clientY});
+        if(before&&S.pan.hit){S.centerX+=S.pan.hit.x-before.x;S.centerZ+=S.pan.hit.y-before.y;clampCenter();placeCam()}
+        const now=groundPointAt({clientX:e.clientX,clientY:e.clientY});
+        if(now)S.pan.hit=now;
+      }
+      S.pan.lastX=e.clientX;S.pan.lastY=e.clientY;return;
+    }
+    if(!(GameState.selectedTower||GameState.selectedSkill)||!canAct())return;if(GameState.placementDragging?e.pointerId!==GameState.placementPointerId:e.pointerType!=='mouse')return;const p=groundAt(e);if(p){if(GameState.selectedSkill)drawSkillPreview(p.x,p.y);else drawPlacementPreview(p.x,p.y)}});
+  host.addEventListener('pointerup',e=>{
+    if(S.pan&&e.pointerId===S.pan.pointerId){
+      const wasTap=!S.pan.moved;S.pan=null;
+      if(wasTap&&canAct()&&inside(e)){const p=groundAt(e);if(p){const t=findTowerAt(p.x,p.y);if(t)selectPlacedTower(t);else deselectPlacedTower()}}
+      try{host.releasePointerCapture(e.pointerId)}catch(_){}return;
+    }
+    if(!(GameState.selectedTower||GameState.selectedSkill)||!GameState.placementDragging||e.pointerId!==GameState.placementPointerId)return;
     const p=canAct()&&inside(e)?groundAt(e):null;if(p){if(GameState.selectedSkill)castSkillAt(p.x,p.y);else placeTower(p.x,p.y)}clearPlacementPreview();if(GameState.selectedTower)showBuildGrid()});
-  host.addEventListener('pointercancel',e=>{if(e.pointerId===GameState.placementPointerId){clearPlacementPreview();if(GameState.selectedTower)showBuildGrid()}});
+  host.addEventListener('pointercancel',e=>{if(S.pan&&e.pointerId===S.pan.pointerId)S.pan=null;if(e.pointerId===GameState.placementPointerId){clearPlacementPreview();if(GameState.selectedTower)showBuildGrid()}});
   host.addEventListener('contextmenu',e=>e.preventDefault());
   host.addEventListener('wheel',e=>{e.preventDefault();zoomCam(e.deltaY>0?1.06:.94)},{passive:false});
   document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();if(k==='q')rotateCam(-1);if(k==='e')rotateCam(1)});
@@ -557,6 +595,9 @@ function frame(ts){requestAnimationFrame(frame);const real=ts-(S.last||ts),raw=M
   Ambience.update(ts);if(window.V69Animations)V69Animations.update(raw,ts);if(window.V6Visual)V6Visual.update(ts);if(window.V65Visual)V65Visual.update(ts);placeCam();GameState.enemies.forEach(e=>e.bar.quaternion.copy(cam.quaternion));renderer.render(scene,cam)}
 let booting=false,worldReady=false;
 async function initGame(){
+  S.bazInitial=(host.clientWidth||800)/(host.clientHeight||500)<1?-Math.PI/2:0;
+  S.baz=S.bazInitial;
+
   if(booting||worldReady)return;booting=true;setLoadState('loading',0);
   let failed=false;
   try{

@@ -15,10 +15,9 @@
       <div class="v6-season"><span id="v6SeasonIcon">☀</span><b id="v6SeasonName">VALLE DEL ALBA</b><small id="v6SeasonHint">EL REINO RESPIRA</small></div>
       <div class="v6-wave-intro"><span id="v6WaveIcon">⚔</span><b id="v6WaveTitle">OLEADA</b><small id="v6WaveSub">Las tropas enemigas se aproximan</small></div>
       <div class="v6-boss-alert"><span>♛</span><div><b id="v6BossTitle">JEFE</b><small id="v6BossSub">Una presencia oscura entra en el campo</small></div></div>
-      <div class="v6-minimap"><div class="v6-mini-head"><span>MAPA TÁCTICO</span><b id="v6MiniWave">01</b></div><canvas id="v6MiniCanvas" width="180" height="108"></canvas><div class="v6-mini-legend"><i class="ally"></i> TORRES <i class="enemy"></i> ENEMIGOS <i class="castle"></i> CASTILLO</div></div>
       <div class="v6-corner-glow left"></div><div class="v6-corner-glow right"></div>`;
     document.getElementById('gameHost').appendChild(root);
-    mini=document.getElementById('v6MiniCanvas'); ctx=mini.getContext('2d');
+    mini=null; ctx=null; // V8.4: minimapa eliminado (repetía el mapa y tapaba el castillo)
   }
 
   function theme(){

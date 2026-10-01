@@ -129,7 +129,7 @@ const Progress = (() => {
     const ach = ACH.map((a) => `<div class="realm-ach${data.ach[a.id] ? ' got' : ''}"><span>${data.ach[a.id] ? a.icon : '🔒'}</span><div><b>${a.name}</b><small>${a.desc}</small></div></div>`).join('');
     const got = ACH.filter((a) => data.ach[a.id]).length;
     body.innerHTML = `<div class="realm-crowns">👑 <b>${data.crowns}</b> coronas <small>· se ganan por oleada, bajas, victorias y logros</small></div>
-      <h3>MAPAS</h3><div class="realm-maps">${maps}</div>
+      <h3>ELEGIR MAPA</h3><p class="realm-hint">Son 4 campos de batalla distintos. Gana uno para desbloquear el siguiente; cada uno es más difícil pero da más coronas. Al elegir uno, el juego se recarga.</p><div class="realm-maps">${maps}</div>
       <h3>MEJORAS DEL REINO</h3><div class="realm-shop">${shop}</div>
       <h3>LOGROS <small>${got} / ${ACH.length}</small></h3><div class="realm-achs">${ach}</div>`;
   }

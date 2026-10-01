@@ -606,3 +606,12 @@ button:focus-visible{outline:2px solid var(--ui-cyan);outline-offset:3px}
   .v6-wave-intro.show,.v6-boss-alert.show,.v65-cinematic.show{opacity:1}
 }
 @media(max-width:600px){.v6-wave-intro,.v6-boss-alert,.v65-cinematic{top:54px!important;padding:6px 14px!important}.v6-boss-alert{top:90px!important}.v65-cinematic{top:126px!important}}
+
+/* V8.4 — minimapa eliminado y texto de ayuda en el panel de mapas */
+.v6-minimap{display:none!important}
+.realm-hint{margin:0 0 10px;color:#9fb0b8;font:500 12px/1.4 system-ui,sans-serif;letter-spacing:0}
+
+/* V8.5 — pausa: toda la pantalla de pausa es tocable y tiene botón grande para continuar */
+#pauseOverlay{cursor:pointer;touch-action:manipulation;z-index:30}
+#resumeBtn{display:block;width:100%;min-height:52px;margin:14px 0 4px;padding:12px 22px;border:1px solid #6fd8ff;border-radius:12px;background:linear-gradient(180deg,#2f8f6b,#1f6b4f);color:#fff;font:800 16px Cinzel,serif;letter-spacing:1px;box-shadow:0 6px 18px #0008;cursor:pointer;touch-action:manipulation}
+#resumeBtn:active{transform:scale(.98)}
