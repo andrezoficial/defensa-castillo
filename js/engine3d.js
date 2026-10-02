@@ -324,7 +324,7 @@ function cloneModel(src){const clone=src.clone(true),a=[],b=[],sl=[],cl=[],s2c=n
   return clone}
 // Ajuste de pivote por modelo [x,y,z] (unidades del modelo, antes de escalar): apoya los pies en y=0 y centra el cuerpo.
 // El wyvern mide ~7 u de largo (cola incluida), tiene los pies en y≈-1.24 y su centro en z≈-1.45; mira hacia +z.
-const MODEL_FIX={wyvern:[0,1.24,1.45],wyvernboss:[0,.93,1.3],orc:[0,.14,0],orcrun:[0,.14,0]}; // orc: sube el modelo para que los pies pisen el suelo durante el ciclo de caminar
+const MODEL_FIX={wyvern:[0,1.24,1.45],wyvernboss:[0,.93,1.3],orc:[0,.14,0],orcrun:[0,.14,0],darkknight:[0,.05,0]}; // orc: sube el modelo para que los pies pisen el suelo durante el ciclo de caminar
 // zombie.glb es una multitud de 10 zombis (5 mujeres A-E, 5 hombres A-E) separados en el suelo + una línea de suelo.
 // Se deja solo una variante por instancia y se centra en el origen. Centros (x,z) medidos con la pose de reposo.
 const ZOMBIE_VARIANTS=[['rig_CharRoot',2.2,-0.97],['rig_CharRoot001',.24,2.44],['rig_CharRoot002',.05,.03],['rig_CharRoot003',-1.39,0],
@@ -371,7 +371,7 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
   return{g,top,fig}}
 const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
 // modelo, tamaño, color de tinte, intensidad del tinte, opacidad
-const MODEL_CFG={goblin:['enemy_soldier',38],brute:['orc',58],raider:['orcrun',44,0xd4af37,.4],ogre:['enemy_soldier',46],swarm:['enemy_soldier',25,0xe0b341,.45],saboteur:['enemy_soldier',44,0x4a4a66,.55],healer:['wizard',18,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55]};
+const MODEL_CFG={goblin:['enemy_soldier',38],brute:['orc',40],raider:['orcrun',32,0xd4af37,.4],ogre:['enemy_soldier',38],swarm:['enemy_soldier',25,0xe0b341,.45],saboteur:['enemy_soldier',44,0x4a4a66,.55],healer:['wizard',18,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55]};
 function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,icon,sc=1;
   if(key==='boss'){
     const mk=bd.model&&MODELS[bd.model[0]]?bd.model[0]:'solani';
@@ -525,7 +525,7 @@ function fitPortrait(){/* Móvil vertical: busca la distancia a la que el mapa p
 const el=.96,c=Math.cos(el),A=-Math.PI/2,pts=[[0,0,0],[800,0,0],[0,0,500],[800,0,500],[40,70,0],[40,70,500]],pr=new THREE.Vector3();
 const ext=d=>{cam.position.set(400+Math.sin(A)*c*d,Math.sin(el)*d,255+Math.cos(A)*c*d);cam.lookAt(400,0,255);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);cam.matrixWorldInverse.copy(cam.matrixWorld).invert();let ex=0,ey=0;for(const q of pts){pr.set(q[0],q[1],q[2]).project(cam);ex=Math.max(ex,Math.abs(pr.x));ey=Math.max(ey,Math.abs(pr.y))}return[ex,ey]};
 let d=1000;for(let i=0;i<8;i++){const[ex,ey]=ext(d);d*=Math.max(ex/.97,ey/.9)**.9}return d}
-function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=S.bazInitial??(S.baz=v?-Math.PI/2:0);if(S.lastV!==null&&S.lastV!==v){S.zoom=1;S.centerX=400;S.centerZ=255}S.lastV=v;S.fitDist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*(v?1:S.mobileCamMul);S.zoom=clampZoom(S.zoom);S.dist=S.fitDist*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600;
+function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=v?Math.PI/2:0;if(S.lastV!==null&&S.lastV!==v){S.zoom=1;S.centerX=400;S.centerZ=255}S.lastV=v;S.fitDist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*(v?1:S.mobileCamMul);S.zoom=clampZoom(S.zoom);S.dist=S.fitDist*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600;
   /* Móvil: personajes más grandes para que se distingan (vertical x1.5, horizontal bajo x1.25) */
   S.u=v?(w<=520?1.5:1.3):(h<420?1.25:1);
   for(const t of GameState.towers){t.top0=t.top0||t.top;t.top=t.top0*S.u;applyScale(t)}}
@@ -605,7 +605,7 @@ function frame(ts){requestAnimationFrame(frame);const real=ts-(S.last||ts),raw=M
   Ambience.update(ts);if(window.V69Animations)V69Animations.update(raw,ts);if(window.V6Visual)V6Visual.update(ts);if(window.V65Visual)V65Visual.update(ts);placeCam();GameState.enemies.forEach(e=>e.bar.quaternion.copy(cam.quaternion));renderer.render(scene,cam)}
 let booting=false,worldReady=false;
 async function initGame(){
-  S.bazInitial=(host.clientWidth||800)/(host.clientHeight||500)<1?-Math.PI/2:0;
+  S.bazInitial=(host.clientWidth||800)/(host.clientHeight||500)<1?Math.PI/2:0;
   S.baz=S.bazInitial;
 
   if(booting||worldReady)return;booting=true;setLoadState('loading',0);

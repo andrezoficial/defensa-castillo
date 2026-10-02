@@ -7,14 +7,14 @@
   const mixers=new Set(), controllers=new Set();
   // Estados que usan clips reales del GLB (el resto usa el movimiento procedural de reserva).
   // archer y wizard: idle en bucle + attack de una sola pasada que vuelve a idle (ver play/update).
-  const REAL={zombie:['idle','walk'],wyvern:['idle','walk'],wyvernboss:['idle','walk'],solani:['idle'],orc:['walk'],orcrun:['walk'],archer:['idle','attack'],wizard:['idle','attack']};
+  const REAL={zombie:['idle','walk'],wyvern:['idle','walk'],wyvernboss:['idle','walk'],solani:['idle'],orc:['walk'],orcrun:['walk'],darkknight:['idle','walk'],archer:['idle','attack'],wizard:['idle','attack']};
   // velocidad del clip por modelo: el orco camina a 38 u/s, así que su ciclo se frena para que los pies no patinen
-  const SPEED={orc:.45,orcrun:.74}; // orcrun = mismo orc.glb con el clip 'run' (Balista Veloz, 90 u/s)
+  const SPEED={orc:.45,orcrun:.74,darkknight:.27}; // darkknight: clip 'walk' reasignado del orco; 27 u/s con escala 108 // orcrun = mismo orc.glb con el clip 'run' (Balista Veloz, 90 u/s)
   const realOf=k=>REAL[k]||['idle','walk','attack','hit','death','phase'];
   const TOWER=k=>k==='archer'||k==='wizard';
   const reduced=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // el jefe dragón usa el clip 'flaping' (aleteo en sitio, bucle limpio) tanto parado como en marcha
-  const KEYALIAS={wyvernboss:{idle:['flaping'],walk:['flaping']},orcrun:{idle:['run'],walk:['run']}};
+  const KEYALIAS={wyvernboss:{idle:['flaping'],walk:['flaping']},orcrun:{idle:['run'],walk:['run']},darkknight:{idle:['walk'],walk:['walk']}};
   const clipName=(clips,state,key)=>{
     if(!clips||!clips.length)return null;
     const aliases={idle:['idle','idol','breath','stand'],walk:['walk','run','move'],attack:['attack','shoot','cast','hit'],hit:['hit','hurt','damage'],death:['death','die'],phase:['roar','special','attack']};
