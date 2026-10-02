@@ -300,9 +300,22 @@ function loadMapKit(){
   return MAPKIT_READY;
 }
 let BOSS_MODELS_READY=Promise.resolve();
+// V8.14: orc.glb trae colores por vértice muy oscuros (verde ~0.05-0.15 en lineal) y la escena renderiza sin corrección gamma,
+// así que el Ogro Bruto y la Balista Veloz se veían casi negros. Se aclaran una sola vez al cargar (c^exp, exp<1): conserva el matiz y sube el brillo.
+function liftVertexColors(root,exp){const seen=new Set();root.traverse(o=>{if(!o.isMesh||!o.geometry)return;const a=o.geometry.attributes.color;if(!a||seen.has(a))return;seen.add(a);
+  for(let i=0;i<a.count;i++)a.setXYZ(i,Math.pow(a.getX(i),exp),Math.pow(a.getY(i),exp),Math.pow(a.getZ(i),exp));
+  if(a.data)a.data.needsUpdate=true;else a.needsUpdate=true})}
+// V8.14: las texturas de enemy_soldier (brillo medio ≈0,1) y solani se decodificaban como sRGB y se mostraban sin gamma → casi negras.
+// Se redibujan una vez en un canvas con una curva c^exp y se usan como textura lineal (sin decodificar sRGB), como el resto de colores de la escena.
+function liftTextures(root,exp){const lut=new Uint8ClampedArray(256);for(let i=0;i<256;i++)lut[i]=Math.round(255*Math.pow(i/255,exp));const cache=new Map();
+  root.traverse(o=>{if(!o.isMesh||!o.material)return;(Array.isArray(o.material)?o.material:[o.material]).forEach(mt=>{const t=mt.map;if(!t||!t.image)return;
+    let nt=cache.get(t);if(!nt){try{const im=t.image,w=im.width||im.naturalWidth,h=im.height||im.naturalHeight,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(im,0,0,w,h);
+      const d=x.getImageData(0,0,w,h),a=d.data;for(let i=0;i<a.length;i+=4){a[i]=lut[a[i]];a[i+1]=lut[a[i+1]];a[i+2]=lut[a[i+2]]}x.putImageData(d,0,0);
+      nt=new THREE.CanvasTexture(c);nt.flipY=t.flipY;nt.wrapS=t.wrapS;nt.wrapT=t.wrapT;nt.anisotropy=t.anisotropy||4;nt.needsUpdate=true}catch(err){nt=t}cache.set(t,nt)}
+    mt.map=nt;mt.needsUpdate=true})})}
 function loadModelKey(k,L){return new Promise((ok,no)=>{
   if(MODELS[k]) return ok();
-  const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;if(k==='orc')MODELS.orcrun=g;ok()},fail=e=>no(e);
+  const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{if(k==='orc')liftVertexColors(g.scene,.4);else if(k==='darkknight')liftVertexColors(g.scene,.55);else if(k==='enemy_soldier')liftTextures(g.scene,.6);else if(k==='solani')liftTextures(g.scene,.8);MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;if(k==='orc')MODELS.orcrun=g;ok()},fail=e=>no(e);
   if(d){const b=atob(d),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);L.parse(a.buffer,'',done,fail)}else L.load('assets/models/'+k+'.glb',done,undefined,fail);
 })}
 function loadModels(onProgress){

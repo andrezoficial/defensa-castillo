@@ -255,3 +255,11 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 - **Jefe «Caballero Negro»** (`assets/models/darkknight.glb`, entrada en `BOSS_DEFS`): caballero con armadura, espada y escudo, jefe final de la campaña (oleada 15). El modelo original (101 MB, 1,5 M de triángulos, texturas 4K) se redujo a ~24 000 triángulos y 1,8 MB, con los colores de la textura horneados como color por vértice. El modelo no traía animaciones: se le reasignó el clip `walk` del orco (retarget por huesos, mismo esqueleto Mixamo) y camina con piernas y brazos reales. Para cambiar en qué oleada sale, mueve su entrada dentro de `BOSS_DEFS` (los jefes rotan en el orden de la lista, uno cada 5 oleadas).
 - **Cámara vertical (móvil)**: en pantalla vertical el castillo queda abajo y los enemigos entran por arriba (`S.baz = +π/2` en `fit()`); en horizontal se mantiene la cámara de siempre. Se recalcula al girar el dispositivo.
 - **Tamaños**: Ogro Bruto (orco) 40, Balista Veloz (orco corredor) 32 y Torre de Asedio (`ogre`) 38 en `MODEL_CFG`.
+
+## V8.14 — Enemigos ya no se ven negros
+- **Causa**: la escena se renderiza sin corrección gamma y los modelos de enemigos son muy oscuros: la textura de `enemy_soldier.glb` (Soldado, Ogro/Torre de Asedio, Enjambre, Saboteador, Espectro) tiene brillo medio ≈0,1, y los colores por vértice de `orc.glb` (Ogro Bruto, Balista Veloz) y `darkknight.glb` van de 0,03 a 0,15. Al decodificarse como sRGB y mostrarse sin gamma quedaban casi negros.
+- **Arreglo** (`js/engine3d.js`, se aplica una sola vez al cargar cada modelo):
+  - `liftVertexColors()` aclara los colores por vértice: `orc` (c^0,4) y `darkknight` (c^0,55).
+  - `liftTextures()` redibuja la textura en un canvas con una curva c^exp y la usa como lineal: `enemy_soldier` (c^0,6) y `solani` (c^0,8).
+- Los héroes, el castillo, el mapa y el resto de jefes no cambian. Para ajustar el brillo, cambia los exponentes en `loadModelKey()` (más bajo = más claro).
+- Caché del service worker: `defensa-castillo-v8.14-ogros` (necesario para que los dispositivos descarguen el `engine3d.js` nuevo).
