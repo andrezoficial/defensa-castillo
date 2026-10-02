@@ -7,12 +7,14 @@
   const mixers=new Set(), controllers=new Set();
   // Estados que usan clips reales del GLB (el resto usa el movimiento procedural de reserva).
   // archer y wizard: idle en bucle + attack de una sola pasada que vuelve a idle (ver play/update).
-  const REAL={zombie:['idle','walk'],wyvern:['idle','walk'],wyvernboss:['idle','walk'],solani:['idle'],archer:['idle','attack'],wizard:['idle','attack']};
+  const REAL={zombie:['idle','walk'],wyvern:['idle','walk'],wyvernboss:['idle','walk'],solani:['idle'],orc:['walk'],orcrun:['walk'],archer:['idle','attack'],wizard:['idle','attack']};
+  // velocidad del clip por modelo: el orco camina a 38 u/s, así que su ciclo se frena para que los pies no patinen
+  const SPEED={orc:.45,orcrun:.74}; // orcrun = mismo orc.glb con el clip 'run' (Balista Veloz, 90 u/s)
   const realOf=k=>REAL[k]||['idle','walk','attack','hit','death','phase'];
   const TOWER=k=>k==='archer'||k==='wizard';
   const reduced=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // el jefe dragón usa el clip 'flaping' (aleteo en sitio, bucle limpio) tanto parado como en marcha
-  const KEYALIAS={wyvernboss:{idle:['flaping'],walk:['flaping']}};
+  const KEYALIAS={wyvernboss:{idle:['flaping'],walk:['flaping']},orcrun:{idle:['run'],walk:['run']}};
   const clipName=(clips,state,key)=>{
     if(!clips||!clips.length)return null;
     const aliases={idle:['idle','idol','breath','stand'],walk:['walk','run','move'],attack:['attack','shoot','cast','hit'],hit:['hit','hurt','damage'],death:['death','die'],phase:['roar','special','attack']};
@@ -40,7 +42,7 @@
     if(mixer){used.forEach(c=>{actions[c.name]=mixer.clipAction(c)});mixers.add(mixer)}
     const c={group,key:modelKey,mixer,clips,actions,state:'idle',nextState:'idle',t:Math.random()*10,age:0,seen:false,off:{y:0,rx:0,ry:0,rz:0},flash:0,attack:0,death:0,phase:0,baseScale:group.scale.clone(),reduced:reduced()};
     group.userData.v69=c;controllers.add(c);
-    play(c,'idle',true);
+    play(c,/^orc/.test(modelKey)?'walk':'idle',true); // el orco no tiene clip idle: arranca ya caminando (evita la pose en T)
     return group;
   }
   function play(c,state,force,ms){
@@ -52,7 +54,7 @@
       Object.values(c.actions).forEach(a=>{if(a!==c.actions[clip.name])a.fadeOut(.12)});
       const a=c.actions[clip.name];a.reset().fadeIn(tw&&state==='attack'?.08:.12);
       a.setLoop(once?THREE.LoopOnce:THREE.LoopRepeat,once?1:Infinity);a.clampWhenFinished=state==='death';
-      let ts=1;
+      let ts=SPEED[c.key]||1;
       if(tw&&state==='attack'){
         // el clip de ataque se acelera para caber entre dos disparos (y vuelve a idle al terminar)
         ts=ms>0?Math.min(4,Math.max(1,clip.duration*1000/(ms*.92))):1.5;

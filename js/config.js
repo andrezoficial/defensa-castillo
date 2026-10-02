@@ -236,6 +236,13 @@ const BOSS_DEFS = [
       { at: 0.66, title: 'REFUERZOS', do: ['summon'] },
       { at: 0.33, title: 'FURIA', do: ['enrage', 'stomp'] },
     ] },
+  // Caballero Negro (oleada 15, el jefe final de la campaña): armadura pesada, escudo y espada. Modelo estático con movimiento procedural.
+  { name: 'Caballero Negro', model: ['darkknight', 108], hb: 124, tint: null, hpMul: 1.6, speed: 27, size: 98,
+    phases: [
+      { at: 0.75, title: 'GUARDIA DE HIERRO', do: ['shield'] },
+      { at: 0.5, title: 'ESCOLTA', do: ['elite'] },
+      { at: 0.28, title: 'FURIA DEL CABALLERO', do: ['enrage', 'stomp', 'shield'] },
+    ] },
   { name: 'Coloso Blindado', tint: 0x5a78c8, hpMul: 1.35, speed: 26, size: 92,
     phases: [
       { at: 0.75, title: 'ESCUDO ARCANO', do: ['shield'] },

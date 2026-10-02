@@ -32,7 +32,6 @@ const Settings = (() => {
     try {
       if (document.fullscreenElement) { await document.exitFullscreen(); return; }
       await document.documentElement.requestFullscreen();
-      if (screen.orientation && screen.orientation.lock && matchMedia('(pointer:coarse)').matches) screen.orientation.lock('landscape').catch(() => {});
     } catch (e) { /* el navegador lo rechazó */ }
   }
   let wake = null;

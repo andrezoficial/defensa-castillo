@@ -24,7 +24,7 @@ Sobrevive **15 oleadas** para ganar; después puedes seguir en **modo sin fin** 
 | Habilidades activas | Botones ☄ ❄ ⚡ (abajo a la derecha del mapa) | `Z` / `X` / `C` |
 | Velocidad ×2 | Botón » | `F` |
 | Pausa | Botón Ⅱ | `P` (también se pausa sola al cambiar de pestaña) |
-| Cámara | Botones ⟲ ⟳ + − del mapa · rueda | `Q` / `E` |
+| Cámara | Pellizco con dos dedos = zoom · un dedo (o dos) arrastra el mapa · botones ⟲ ⟳ + − · rueda | `Q` / `E` |
 | Sonido | Botón ♪ (se recuerda) | — |
 
 ## Novedades de la V5.0
@@ -92,9 +92,11 @@ La primera vez que sale cada uno aparece un aviso con su consejo. El botón de o
 Cada jefe tiene su propio aspecto, vida y fases. Al bajar de cierto % de vida queda **invulnerable ~1,3 s**, se anuncia la fase y ejecuta sus acciones. Hay una barra de vida del jefe con marcas de fase y barra de escudo.
 | Oleada | Jefe | Fases |
 |---|---|---|
-| 5, 20… | **Trabuquete Real** | 66 % refuerzos · 33 % furia + pisotones |
-| 10, 25… | **Coloso Blindado** | 75 % escudo arcano · 50 % legión (saboteadores + chamán) · 25 % furia + escudo |
-| 15, 30… | **Señor del Eclipse** | 80 % espectros · 55 % temblor (pisotones) + escudo · 30 % eclipse (furia + legión + espectros) |
+| 5, 30… | **Wyvern Ancestral** | 70 % crías · 40 % furia dracónica + pisotón · 20 % escamas arcanas (escudo) |
+| 10, 35… | **Trabuquete Real** | 66 % refuerzos · 33 % furia + pisotones |
+| 15, 40… | **Caballero Negro** | 75 % guardia de hierro (escudo) · 50 % escolta (saboteadores + chamán) · 28 % furia + pisotones + escudo |
+| 20, 45… | **Coloso Blindado** | 75 % escudo arcano · 50 % legión (saboteadores + chamán) · 25 % furia + escudo |
+| 25, 50… | **Señor del Eclipse** | 80 % espectros · 55 % temblor (pisotones) + escudo · 30 % eclipse (furia + legión + espectros) |
 
 El **escudo** absorbe daño antes que la vida y hay que romperlo. El **pisotón** aturde las torres cercanas ~2 s.
 
@@ -250,3 +252,4 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 
 ## V8.5 — Pausa en el celular
 - La pantalla de PAUSA ahora se puede tocar para continuar y tiene un botón grande «▶ CONTINUAR» (antes solo reanudaba el botón pequeño de arriba o la tecla P, que no existe en el celular).
+- **Jefe «Caballero Negro»** (`assets/models/darkknight.glb`, entrada en `BOSS_DEFS`): caballero con armadura, espada y escudo, jefe final de la campaña (oleada 15). El modelo original (101 MB, 1,5 M de triángulos, texturas 4K) se redujo a ~24 000 triángulos y 1,8 MB, con los colores de la textura horneados como color por vértice. No trae animaciones, así que usa el movimiento procedural de `v69.js`. Para cambiar en qué oleada sale, mueve su entrada dentro de `BOSS_DEFS` (los jefes rotan en el orden de la lista, uno cada 5 oleadas).

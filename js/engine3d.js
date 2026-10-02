@@ -1,6 +1,6 @@
 // engine3d.js — Motor 3D (Three.js). Conserva el mapa 2D: x→X, y→Z (1 px = 1 unidad).
 const host=document.getElementById('gameHost');
-const S={running:false,now:0,fx:[],timers:[],shake:0,az:0,zoom:1,u:1,last:0,baz:0,dist:900,centerX:400,centerZ:250,slots:null,prev:null,sel:null,eid:0,slow:0,skPrev:null,fl:null,scorch:[],pops:0,pan:null};
+const S={running:false,now:0,fx:[],timers:[],shake:0,az:0,zoom:1,u:1,last:0,baz:0,dist:900,centerX:400,centerZ:250,slots:null,prev:null,sel:null,eid:0,slow:0,skPrev:null,fl:null,scorch:[],pops:0,pan:null,pinch:null,touches:new Map(),fitDist:900,lastV:null};
 GameState.scene=S;
 const gc={},mc={},bc={};
 // Dispositivo táctil / pantalla pequeña: sombras y resolución más ligeras.
@@ -302,12 +302,12 @@ function loadMapKit(){
 let BOSS_MODELS_READY=Promise.resolve();
 function loadModelKey(k,L){return new Promise((ok,no)=>{
   if(MODELS[k]) return ok();
-  const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;ok()},fail=e=>no(e);
+  const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;if(k==='orc')MODELS.orcrun=g;ok()},fail=e=>no(e);
   if(d){const b=atob(d),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);L.parse(a.buffer,'',done,fail)}else L.load('assets/models/'+k+'.glb',done,undefined,fail);
 })}
 function loadModels(onProgress){
   // Carga inicial ligera: no se descargan los jefes de 8-12 MB hasta que hacen falta.
-  const core=['archer','wizard','catapult','goblin','raider','ogre','castle'],boss=['wyvern','solani'];
+  const core=['archer','wizard','catapult','goblin','raider','ogre','castle','enemy_soldier','orc'],boss=['wyvern','solani','darkknight'];
   const L=new THREE.GLTFLoader();let n=0;const tick=()=>{n++;if(onProgress)onProgress(n/core.length)};
   return Promise.all(core.map(k=>loadModelKey(k,L).then(tick))).then(()=>{
     // Preparación en segundo plano; el jugador puede empezar sin esperar los assets pesados.
@@ -324,7 +324,7 @@ function cloneModel(src){const clone=src.clone(true),a=[],b=[],sl=[],cl=[],s2c=n
   return clone}
 // Ajuste de pivote por modelo [x,y,z] (unidades del modelo, antes de escalar): apoya los pies en y=0 y centra el cuerpo.
 // El wyvern mide ~7 u de largo (cola incluida), tiene los pies en y≈-1.24 y su centro en z≈-1.45; mira hacia +z.
-const MODEL_FIX={wyvern:[0,1.24,1.45],wyvernboss:[0,.93,1.3]};
+const MODEL_FIX={wyvern:[0,1.24,1.45],wyvernboss:[0,.93,1.3],orc:[0,.14,0],orcrun:[0,.14,0]}; // orc: sube el modelo para que los pies pisen el suelo durante el ciclo de caminar
 // zombie.glb es una multitud de 10 zombis (5 mujeres A-E, 5 hombres A-E) separados en el suelo + una línea de suelo.
 // Se deja solo una variante por instancia y se centra en el origen. Centros (x,z) medidos con la pose de reposo.
 const ZOMBIE_VARIANTS=[['rig_CharRoot',2.2,-0.97],['rig_CharRoot001',.24,2.44],['rig_CharRoot002',.05,.03],['rig_CharRoot003',-1.39,0],
@@ -335,7 +335,7 @@ function pickZombie(m,idx){const keep=ZOMBIE_VARIANTS[idx][0],rm=[];
 function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),src=MODELS[k];if(!src||!src.scene){console.warn('Modelo 3D no disponible:',k);return g}const m=cloneModel(src.scene),mats=[];m.scale.setScalar(size);m.rotation.y=ry;
   let fx=MODEL_FIX[k];
   if(k==='zombie'){const vi=zv!=null?zv:Math.floor(Math.random()*10),v=pickZombie(m,vi);fx=[-v[1],0,-v[2]];g.userData.zv=vi}
-  if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(window.V69Animations)window.V69Animations.attach(g,k);return g}
+  if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(k==='enemy_soldier'&&src.animations&&src.animations.length){const mixer=new THREE.AnimationMixer(m);g.userData.animMixer=mixer;const clip=src.animations.find(a=>/walk|run/i.test(a.name))||src.animations[0];const action=mixer.clipAction(clip);action.reset();action.play();g.userData.animAction=action;}if(window.V69Animations&&k!=='enemy_soldier')window.V69Animations.attach(g,k);return g}
 function towerModel(type){const g=new THREE.Group();let top,fig;
   // V7: sin torres, solo el personaje sobre el suelo con una sombra suave
   const sh=flat(new THREE.Mesh(geo('Circle',1,24),tmat(0x000000,.28)));sh.position.y=1.4;sh.scale.setScalar(type==='area'?22:12);g.add(sh);
@@ -371,7 +371,7 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
   return{g,top,fig}}
 const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
 // modelo, tamaño, color de tinte, intensidad del tinte, opacidad
-const MODEL_CFG={goblin:['goblin',38],brute:['ogre',54,0x7fa85f,.35],raider:['raider',44],ogre:['ogre',46],swarm:['goblin',25,0xe0b341,.45],saboteur:['raider',44,0x4a4a66,.55],healer:['wizard',18,0x55d98a,.5],wraith:['raider',48,0x8fd3ff,.7,.55]};
+const MODEL_CFG={goblin:['enemy_soldier',38],brute:['orc',58],raider:['orcrun',44,0xd4af37,.4],ogre:['enemy_soldier',46],swarm:['enemy_soldier',25,0xe0b341,.45],saboteur:['enemy_soldier',44,0x4a4a66,.55],healer:['wizard',18,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55]};
 function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,icon,sc=1;
   if(key==='boss'){
     const mk=bd.model&&MODELS[bd.model[0]]?bd.model[0]:'solani';
@@ -430,7 +430,7 @@ function updateEnemies(time,dt){for(const e of GameState.enemies){if(e.dead)cont
   const dx=wp.x-e.x,dy=wp.y-e.y,d=Math.hypot(dx,dy),mv=d>=4;
   if(!mv){e.wpIndex++;e.vx=e.vy=0}else{e.x+=dx/d*spd;e.y+=dy/d*spd;e.travel+=spd;e.vx=dx/d*cur;e.vy=dy/d*cur;let df=Math.atan2(-dy,dx)-e.ang;df=Math.atan2(Math.sin(df),Math.cos(df));e.ang+=df*Math.min(1,dt/120)}
   e.flash=Math.max(0,e.flash-dt);
-  const walk=mv&&cur>0;if(window.V69Animations)V69Animations.state(e.mesh,e.dead?'death':walk?'walk':'idle');const hov=e.hov=e.key==='wraith'?9+Math.sin(time/280+e.seed)*3:(e.bd&&e.bd.fly)?12+Math.sin(time/420+e.seed)*3:0;
+  const walk=mv&&cur>0;if(e.mesh.userData.animMixer)e.mesh.userData.animMixer.update(dt/1000);else if(window.V69Animations)V69Animations.state(e.mesh,e.dead?'death':walk?'walk':'idle');const hov=e.hov=e.key==='wraith'?9+Math.sin(time/280+e.seed)*3:(e.bd&&e.bd.fly)?12+Math.sin(time/420+e.seed)*3:0;
   e.mesh.position.set(e.x,hov+(walk?Math.abs(Math.sin(time/110+e.seed))*1.6:0),e.y);e.mesh.rotation.set(0,e.ang,walk?Math.sin(time/130+e.seed)*.03:0);e.mesh.scale.setScalar(e.sc*S.u*(1+e.flash/600));
   if(e.aura)e.aura.material.opacity=(e.key==='healer'?.14:.2)+.08*Math.sin(time/180);
   if(e.icon)e.icon.rotation.y=time/300;
@@ -525,17 +525,30 @@ function fitPortrait(){/* Móvil vertical: busca la distancia a la que el mapa p
 const el=.96,c=Math.cos(el),A=-Math.PI/2,pts=[[0,0,0],[800,0,0],[0,0,500],[800,0,500],[40,70,0],[40,70,500]],pr=new THREE.Vector3();
 const ext=d=>{cam.position.set(400+Math.sin(A)*c*d,Math.sin(el)*d,255+Math.cos(A)*c*d);cam.lookAt(400,0,255);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);cam.matrixWorldInverse.copy(cam.matrixWorld).invert();let ex=0,ey=0;for(const q of pts){pr.set(q[0],q[1],q[2]).project(cam);ex=Math.max(ex,Math.abs(pr.x));ey=Math.max(ey,Math.abs(pr.y))}return[ex,ey]};
 let d=1000;for(let i=0;i<8;i++){const[ex,ey]=ext(d);d*=Math.max(ex/.97,ey/.9)**.9}return d}
-function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=S.bazInitial??(S.baz=v?-Math.PI/2:0);S.dist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*S.zoom*S.mobileCamMul;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600;
+function fit(){if(!renderer)return;const w=host.clientWidth||800,h=host.clientHeight||500;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const v=cam.aspect<1,t=Math.tan(cam.fov*Math.PI/360);S.baz=S.bazInitial??(S.baz=v?-Math.PI/2:0);if(S.lastV!==null&&S.lastV!==v){S.zoom=1;S.centerX=400;S.centerZ=255}S.lastV=v;S.fitDist=(v?fitPortrait():Math.max(440/(t*cam.aspect),270/t))*(v?1:S.mobileCamMul);S.zoom=clampZoom(S.zoom);S.dist=S.fitDist*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600;
   /* Móvil: personajes más grandes para que se distingan (vertical x1.5, horizontal bajo x1.25) */
   S.u=v?(w<=520?1.5:1.3):(h<420?1.25:1);
   for(const t of GameState.towers){t.top0=t.top0||t.top;t.top=t.top0*S.u;applyScale(t)}}
-function clampCenter(){const margin=Math.max(30,S.dist*.28);S.centerX=Math.max(margin,Math.min(GAME_WIDTH-margin,S.centerX));S.centerZ=Math.max(margin,Math.min(GAME_HEIGHT-margin,S.centerZ));}
+function clampCenter(){const m=Math.max(30,S.dist*.12),ax=(v,size)=>m*2>=size?size/2:Math.max(m,Math.min(size-m,v));S.centerX=ax(S.centerX,GAME_WIDTH);S.centerZ=ax(S.centerZ,GAME_HEIGHT)}
 function placeCam(){const el=.96,c=Math.cos(el),d=S.dist,j=()=>(Math.random()-.5)*S.shake*Settings.shakeMul();const A=S.baz+S.az;clampCenter();cam.position.set(S.centerX+Math.sin(A)*c*d+j(),Math.sin(el)*d+j(),S.centerZ+Math.cos(A)*c*d);cam.lookAt(S.centerX,0,S.centerZ);S.shake=S.shake<.05?0:S.shake*.88}
 const ray=new THREE.Raycaster(),gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),v2=new THREE.Vector2(),hit=new THREE.Vector3();
 function groundPointAt(e){const r=host.getBoundingClientRect();v2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(v2,cam);return ray.ray.intersectPlane(gp,hit)?{x:hit.x,y:hit.z}:null}
 function groundAt(e){const p=groundPointAt(e);return p?{x:Math.min(GAME_WIDTH,Math.max(0,p.x)),y:Math.min(GAME_HEIGHT,Math.max(0,p.y))}:null}
 function rotateCam(dir){S.az=Math.max(-1.2,Math.min(1.2,S.az+dir*.15))}
-function zoomCam(f){S.zoom=Math.min(1.2,Math.max(.4,S.zoom*f));fit()}
+function clampZoom(z){const mx=cam.aspect<1?1:Math.max(1.2,1/S.mobileCamMul);return Math.min(mx,Math.max(.3,z))}
+function applyZoom(){S.zoom=clampZoom(S.zoom);S.dist=S.fitDist*S.zoom;scene.fog.near=S.dist+500;scene.fog.far=S.dist+2600}
+function zoomCam(f){S.zoom=clampZoom(S.zoom*f);applyZoom();clampCenter()}
+function camSync(){placeCam();cam.updateMatrixWorld(true)}
+/* Mantiene el punto del mapa 'anchor' bajo el punto de pantalla (x,y): así el arrastre y el pellizco siguen a los dedos. */
+function panKeep(x,y,anchor){const cur=groundPointAt({clientX:x,clientY:y});if(cur&&anchor){S.centerX+=anchor.x-cur.x;S.centerZ+=anchor.y-cur.y;clampCenter();camSync()}return groundPointAt({clientX:x,clientY:y})||anchor}
+function startPinch(){if(GameState.placementDragging)clearPlacementPreview();S.pan=null;const[a,b]=[...S.touches.values()];const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;S.pinch={d0:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),z0:S.zoom,anchor:groundPointAt({clientX:mx,clientY:my})}}
+function doPinch(){const[a,b]=[...S.touches.values()];if(!a||!b||!S.pinch)return;const d=Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;S.zoom=S.pinch.z0*S.pinch.d0/d;applyZoom();camSync();S.pinch.anchor=panKeep(mx,my,S.pinch.anchor)}
+function dropTouch(e){/* devuelve true si el gesto de pellizco terminó con este dedo */
+  if(e.pointerType!=='touch'||!S.touches.has(e.pointerId))return false;S.touches.delete(e.pointerId);
+  if(!S.pinch)return false;S.pinch=null;
+  const r=[...S.touches.entries()][0];/* si queda un dedo, sigue arrastrando sin seleccionar nada al soltar */
+  if(r)S.pan={pointerId:r[0],startX:r[1].x,startY:r[1].y,lastX:r[1].x,lastY:r[1].y,moved:true,hit:groundPointAt({clientX:r[1].x,clientY:r[1].y})};
+  try{host.releasePointerCapture(e.pointerId)}catch(_){}return true}
 function bindInput(){
   host.style.touchAction='none';
   const ignore=e=>e.target.closest('#msg,#howToPanel,#camControls,#abilityBar,#bossBar,#towerPanel');
@@ -543,32 +556,29 @@ function bindInput(){
   host.addEventListener('pointerdown',e=>{if(ignore(e)||!canAct())return;
     if(e.pointerType==='mouse'&&e.button===2){clearSelection();return}
     if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(e.pointerType==='touch'){S.touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(S.touches.size===2){startPinch();try{host.setPointerCapture(e.pointerId)}catch(_){}return}if(S.touches.size>2)return}
     const p=groundAt(e);if(!p)return;
     if(GameState.selectedSkill){GameState.placementDragging=true;GameState.placementPointerId=e.pointerId;try{host.setPointerCapture(e.pointerId)}catch(_){}drawSkillPreview(p.x,p.y);return}
     if(GameState.selectedTower){GameState.placementDragging=true;GameState.placementPointerId=e.pointerId;try{host.setPointerCapture(e.pointerId)}catch(_){}drawPlacementPreview(p.x,p.y);return}
 
     // En móvil, un toque selecciona; un arrastre mueve la cámara sin rotarla.
-    if(e.pointerType==='touch'&&S.mobileCam){
+    if(e.pointerType==='touch'){
       S.pan={pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false,hit:p};
       try{host.setPointerCapture(e.pointerId)}catch(_){}
       return;
     }
     const t=findTowerAt(p.x,p.y);if(t)selectPlacedTower(t);else deselectPlacedTower()});
   host.addEventListener('pointermove',e=>{
+    if(e.pointerType==='touch'&&S.touches.has(e.pointerId))S.touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(S.pinch){if(S.touches.size>=2)doPinch();return}
     if(S.pan&&e.pointerId===S.pan.pointerId){
-      const dx=e.clientX-S.pan.lastX,dy=e.clientY-S.pan.lastY;
       if(Math.hypot(e.clientX-S.pan.startX,e.clientY-S.pan.startY)>8)S.pan.moved=true;
-      if(S.pan.moved){
-        // Mantiene el punto bajo el dedo: mueve el centro del mapa, no el ángulo de cámara.
-        const before=groundPointAt({clientX:e.clientX,clientY:e.clientY});
-        if(before&&S.pan.hit){S.centerX+=S.pan.hit.x-before.x;S.centerZ+=S.pan.hit.y-before.y;clampCenter();placeCam()}
-        const now=groundPointAt({clientX:e.clientX,clientY:e.clientY});
-        if(now)S.pan.hit=now;
-      }
+      if(S.pan.moved&&S.pan.hit)S.pan.hit=panKeep(e.clientX,e.clientY,S.pan.hit);
       S.pan.lastX=e.clientX;S.pan.lastY=e.clientY;return;
     }
     if(!(GameState.selectedTower||GameState.selectedSkill)||!canAct())return;if(GameState.placementDragging?e.pointerId!==GameState.placementPointerId:e.pointerType!=='mouse')return;const p=groundAt(e);if(p){if(GameState.selectedSkill)drawSkillPreview(p.x,p.y);else drawPlacementPreview(p.x,p.y)}});
   host.addEventListener('pointerup',e=>{
+    if(dropTouch(e))return;
     if(S.pan&&e.pointerId===S.pan.pointerId){
       const wasTap=!S.pan.moved;S.pan=null;
       if(wasTap&&canAct()&&inside(e)){const p=groundAt(e);if(p){const t=findTowerAt(p.x,p.y);if(t)selectPlacedTower(t);else deselectPlacedTower()}}
@@ -576,7 +586,7 @@ function bindInput(){
     }
     if(!(GameState.selectedTower||GameState.selectedSkill)||!GameState.placementDragging||e.pointerId!==GameState.placementPointerId)return;
     const p=canAct()&&inside(e)?groundAt(e):null;if(p){if(GameState.selectedSkill)castSkillAt(p.x,p.y);else placeTower(p.x,p.y)}clearPlacementPreview();if(GameState.selectedTower)showBuildGrid()});
-  host.addEventListener('pointercancel',e=>{if(S.pan&&e.pointerId===S.pan.pointerId)S.pan=null;if(e.pointerId===GameState.placementPointerId){clearPlacementPreview();if(GameState.selectedTower)showBuildGrid()}});
+  host.addEventListener('pointercancel',e=>{if(dropTouch(e))return;if(S.pan&&e.pointerId===S.pan.pointerId)S.pan=null;if(e.pointerId===GameState.placementPointerId){clearPlacementPreview();if(GameState.selectedTower)showBuildGrid()}});
   host.addEventListener('contextmenu',e=>e.preventDefault());
   host.addEventListener('wheel',e=>{e.preventDefault();zoomCam(e.deltaY>0?1.06:.94)},{passive:false});
   document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();if(k==='q')rotateCam(-1);if(k==='e')rotateCam(1)});
