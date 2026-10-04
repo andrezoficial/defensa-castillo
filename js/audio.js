@@ -7,6 +7,7 @@ const Sound = (() => {
   let ctx = null;
   let master = null;
   let mbus = null;
+  let mduck = null;
   let muted = false;
   const lastPlayed = {};
   try { muted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { /* sin storage */ }
@@ -19,7 +20,9 @@ const Sound = (() => {
       master = ctx.createGain();
       master.connect(ctx.destination);
       mbus = ctx.createGain();
-      mbus.connect(ctx.destination);
+      mduck = ctx.createGain();
+      mbus.connect(mduck);
+      mduck.connect(ctx.destination);
       applyVolume(true);
       loadSamples();
     }
@@ -30,7 +33,8 @@ const Sound = (() => {
   // ---- V8.19: efectos con muestras reales (flechas y hechizos). Si no cargan, suenan los sintetizados de siempre. ----
   const SAMPLE_FILES = {
     arrow_a: 'assets/audio/arrow_a.wav', arrow_b: 'assets/audio/arrow_b.wav', arrow_c: 'assets/audio/arrow_c.wav', arrow_d: 'assets/audio/arrow_d.wav',
-    arrow_volley: 'assets/audio/arrow_volley.wav', spell_short: 'assets/audio/spell_short.wav', spell_long: 'assets/audio/spell_long.wav'
+    arrow_volley: 'assets/audio/arrow_volley.wav', spell_short: 'assets/audio/spell_short.wav', spell_long: 'assets/audio/spell_long.wav',
+    boss_roar: 'assets/audio/boss_roar.mp3', boss_phase: 'assets/audio/boss_phase.mp3', epic_win: 'assets/audio/epic_win.mp3', epic_kill: 'assets/audio/epic_kill.mp3'
   };
   const ARROWS = ['arrow_a', 'arrow_b', 'arrow_c', 'arrow_d'];
   const buffers = {};
@@ -46,10 +50,19 @@ const Sound = (() => {
     });
   }
   // Devuelve true si la muestra sonó (para que el llamador decida si usa el respaldo sintetizado).
-  function sample(name, vol = 0.6, rate = 1, delay = 0) {
+  // Baja la música unos segundos para que un sonido grande (rugido, victoria) se oiga limpio.
+  function duckMusic(sec, level = 0.3) {
+    if (!mduck) return;
+    const t = ctx.currentTime;
+    mduck.gain.cancelScheduledValues(t);
+    mduck.gain.setTargetAtTime(level, t, 0.08);
+    mduck.gain.setTargetAtTime(1, t + sec, 0.6);
+  }
+  function sample(name, vol = 0.6, rate = 1, delay = 0, duck = 0) {
     const buf = buffers[name];
     if (!buf || !ctx) return false;
     if (muted) return true;
+    if (duck) duckMusic(duck);
     const src = ctx.createBufferSource();
     src.buffer = buf; src.playbackRate.value = rate;
     const g = ctx.createGain(); g.gain.value = vol;
@@ -126,7 +139,7 @@ const Sound = (() => {
     upgrade: () => { [392, 494, 587].forEach((f, i) => tone(f, 0.16, 'triangle', 0.16, { delay: i * 0.07 })); },
     sell: () => { tone(880, 0.07, 'square', 0.07); tone(1175, 0.12, 'square', 0.07, { delay: 0.06 }); },
     wave: () => { tone(196, 0.4, 'sawtooth', 0.13); tone(294, 0.5, 'sawtooth', 0.1, { delay: 0.18 }); },
-    boss: () => { tone(82, 0.7, 'sawtooth', 0.2); tone(110, 0.8, 'sawtooth', 0.14, { delay: 0.25 }); noise(0.5, 0.1, 300); },
+    boss: () => { if (sample('boss_roar', 0.85, 1, 0, 4.2)) return; tone(82, 0.7, 'sawtooth', 0.2); tone(110, 0.8, 'sawtooth', 0.14, { delay: 0.25 }); noise(0.5, 0.1, 300); },
     shoot: (type) => {
       if (!gate('shoot-' + type, type === 'basic' ? 110 : type === 'slow' ? 140 : 70)) return;
       if (type === 'basic') {
@@ -135,7 +148,7 @@ const Sound = (() => {
       else { tone(95, 0.2, 'sine', 0.2, { slideTo: 55 }); noise(0.12, 0.06, 500); }
     },
     kill: (isBoss) => {
-      if (isBoss) { tone(120, 0.7, 'sawtooth', 0.2, { slideTo: 40 }); noise(0.6, 0.18, 800); return; }
+      if (isBoss) { if (sample('epic_kill', 0.7, 1, 0, 2.2)) { lastPlayed.epic = performance.now(); return; } tone(120, 0.7, 'sawtooth', 0.2, { slideTo: 40 }); noise(0.6, 0.18, 800); return; }
       if (!gate('kill', 50)) return;
       tone(260, 0.1, 'triangle', 0.09, { slideTo: 120 });
     },
@@ -152,12 +165,13 @@ const Sound = (() => {
     meteorHit: () => { tone(70, 0.6, 'sine', 0.3, { slideTo: 28 }); noise(0.7, 0.2, 700); tone(140, 0.3, 'sawtooth', 0.12, { slideTo: 50 }); },
     freezeAll: () => { sample('spell_long', 0.55, 1.3); [1760, 1480, 1175, 880].forEach((f, i) => tone(f, 0.3, 'sine', 0.09, { delay: i * 0.05 })); noise(0.5, 0.06, 5000, { type: 'highpass' }); },
     fury: () => { sample('arrow_volley', 0.55, 1); [262, 330, 392, 523].forEach((f, i) => tone(f, 0.2, 'sawtooth', 0.1, { delay: i * 0.06 })); tone(1046, 0.5, 'triangle', 0.1, { delay: 0.28 }); },
-    phase: () => { tone(70, 0.9, 'sawtooth', 0.22, { slideTo: 140 }); tone(105, 0.9, 'square', 0.1, { delay: 0.1, slideTo: 210 }); noise(0.7, 0.14, 500); },
+    phase: () => { if (sample('boss_phase', 1, 1, 0, 2.6)) return; tone(70, 0.9, 'sawtooth', 0.22, { slideTo: 140 }); tone(105, 0.9, 'square', 0.1, { delay: 0.1, slideTo: 210 }); noise(0.7, 0.14, 500); },
     stomp: () => { tone(60, 0.45, 'sine', 0.3, { slideTo: 30 }); noise(0.35, 0.16, 400); },
     shieldBreak: () => { noise(0.3, 0.12, 4500, { type: 'highpass' }); tone(660, 0.3, 'triangle', 0.1, { slideTo: 150 }); },
     shieldUp: () => { tone(330, 0.5, 'sine', 0.12, { slideTo: 660 }); tone(495, 0.5, 'sine', 0.08, { delay: 0.1, slideTo: 990 }); },
     waveDone: () => { [523, 659, 784].forEach((f, i) => tone(f, 0.18, 'triangle', 0.13, { delay: i * 0.09 })); },
-    win: () => { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0.28, 'triangle', 0.16, { delay: i * 0.14 })); },
+    // Si el jefe final acaba de caer, la fanfarria de victoria espera a que termine el sonido de su muerte.
+    win: () => { if (sample('epic_win', 0.75, 1, Math.max(0, 3.1 - (performance.now() - (lastPlayed.epic || -1e9)) / 1000), 6)) return; [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0.28, 'triangle', 0.16, { delay: i * 0.14 })); },
     lose: () => { [330, 247, 196, 147].forEach((f, i) => tone(f, 0.45, 'sawtooth', 0.14, { delay: i * 0.22 })); },
   };
 

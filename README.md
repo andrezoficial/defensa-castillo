@@ -265,6 +265,14 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 - Caché del service worker: `defensa-castillo-v8.14-ogros` (necesario para que los dispositivos descarguen el `engine3d.js` nuevo).
 
 
+## V8.20 — Más sonidos (rugidos de dragón y fanfarria épica)
+- **Oleada de jefe:** rugido de dragón (`boss_roar.mp3`, 5,6 s) en lugar del zumbido sintetizado.
+- **Cambio de fase del jefe:** rugido eléctrico de dragón (`boss_phase.mp3`, 3,8 s).
+- **Muerte de un jefe:** golpe épico corto (`epic_kill.mp3`, 3 s).
+- **Victoria:** transición épica completa (`epic_win.mp3`, 7,1 s). Si el jefe final acaba de caer, espera ~3 s para no solaparse con el sonido de su muerte.
+- La música se atenúa unos segundos bajo estos sonidos (`Sound.duckMusic`, bus propio, independiente del ducking de la pausa).
+- Si una muestra no carga, suena el sonido sintetizado de siempre. Caché del service worker: `defensa-castillo-v8.20-sonidos`.
+
 ## V8.19 — Arqueros morados, efectos y música ambiente
 - **Arqueros morados:** figura teñida de violeta, base, aro y núcleo en tonos morados, y flechas lilas (`TOWER_DEFS.basic.color/proj`).
 - **Efectos con muestras reales** (`assets/audio/*.wav`, `Sound.sample` en `js/audio.js`): 4 silbidos de flecha al azar con ligera variación de tono para los arqueros, hechizo corto para el hechicero y hechizo largo para Meteoro y Congelar todo, lluvia de flechas para Furia y hechizo agudo al elegir una especialización. Si una muestra no carga, suena el sonido sintetizado de siempre.
