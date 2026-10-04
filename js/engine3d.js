@@ -230,7 +230,7 @@ function addNatureTreeInstance(src,x,z,scale,rot,shadow){
     };
     o.material=Array.isArray(o.material)?o.material.map(fix):fix(o.material);
   });
-  scene.add(g);
+  scene.add(g);(window.V8Trees=window.V8Trees||[]).push({g,ph:x*.013+z*.021,pine:/pine/i.test(src.scene.name||'')||scale>6.1});
 }
 function queueNatureTrees(spots){
   const L=new THREE.GLTFLoader();
@@ -421,6 +421,7 @@ function damageEnemy(e,dmg,dtype,o){o=o||{};if(e.dead)return;
   if(e.shield>0){const ab=Math.min(e.shield,dmg);e.shield-=ab;dmg-=ab;soak=true;if(e.shield<=0)breakShield(e);else shieldHitFx(e)}
   e.hp-=dmg;if(!o.tick){e.flash=90;if(window.V69Animations)V69Animations.trigger(e.mesh,'hit');}
   damageNumber(e,shown,{crit:o.crit,tick:o.tick,soak:soak&&dmg<=0,force:e.hp<=0});
+  if(!o.tick&&window.V8Visual)V8Visual.hit(e,dtype,o.crit);
   if(o.crit){sfx.crit();burst(e.x,22,e.y,0xffe27a,6,55)}
   if(e.hp<=0){e.dead=true;if(window.V69Animations)V69Animations.trigger(e.mesh,'death');const bounty=Math.round(e.reward*Progress.goldMul());GameState.gold+=bounty;GameState.goldEarned+=bounty;GameState.kills++;Progress.onKill(e);goldPop(e.x,e.y,bounty);updateHUD();sfx.kill(e.isBoss);deathFx(e);
     dropBar(e);const m=e.mesh,s0=e.sc*S.u;addFx(240,p=>{m.scale.setScalar(Math.max(.01,s0*(1-p)));m.position.y=p*10},()=>{scene.remove(m);freeEnemy(e)});return}

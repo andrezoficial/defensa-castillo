@@ -263,3 +263,16 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
   - `liftTextures()` redibuja la textura en un canvas con una curva c^exp y la usa como lineal: `enemy_soldier` (c^0,6) y `solani` (c^0,8).
 - Los héroes, el castillo, el mapa y el resto de jefes no cambian. Para ajustar el brillo, cambia los exponentes en `loadModelKey()` (más bajo = más claro).
 - Caché del service worker: `defensa-castillo-v8.14-ogros` (necesario para que los dispositivos descarguen el `engine3d.js` nuevo).
+
+
+## V8.15 — Pulido visual (`js/visual8.js`)
+- **Hierba, flores y piedrecillas** instanciadas (≈1.000 objetos en 3 llamadas de dibujo) que evitan el camino y el castillo; paleta por mapa.
+- **Sombras de nubes** que cruzan el mapa (más tenues de noche; quietas con «reducir movimiento»).
+- **Braseros vivos**: resplandor aditivo parpadeante y dos luces puntuales que ganan fuerza al caer la noche (sin luces en móvil).
+- **Polvo** bajo los enemigos que caminan (pool reutilizable; no sale en voladores).
+- **Sombras suaves** (PCFSoft) y ligero realce de contraste/saturación en equipos potentes con calidad no baja.
+- Se engancha a `Ambience.init/update`; no cambia la lógica de juego. Caché del service worker: `v8.15-visual`.
+- **Viento en los árboles**: balanceo suave por ráfagas (menos en pinos; quieto con «reducir movimiento»).
+- **Chispas al impactar** según el tipo de daño (dorado, azul, naranja), con límite por enemigo y por carga de efectos.
+- **Halo de brillo** aditivo en cada explosión (simula bloom sin postprocesado, sin descargar nada extra).
+- Las banderas ya se animaban desde V6.5, así que no se tocaron.
