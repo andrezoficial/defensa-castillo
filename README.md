@@ -267,6 +267,7 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 
 ## V8.16  Animaciones de los soldados activas
 - **Corregido**: los enemigos que usan `enemy_soldier.glb` (Goblin, Torre de Asedio, Plaga, Saboteador, Espectro) tenían clip de caminar pero nunca se reproducía: el mezclador se guardaba en el grupo interno (`inst`) y el bucle de enemigos lo busca en `e.mesh` (grupo externo). Ahora `enemyModel` lo enlaza en `js/engine3d.js`.
+- **Corregido (root motion)**: el clip de Mixamo del soldado desplaza la cadera ~1,8 u hacia delante en cada ciclo y la devuelve de golpe, lo que sacaba a los enemigos del camino y los hacía desaparecer. `stripRootMotion()` (`js/engine3d.js`) deja la cadera fija en el eje de avance al cargar `enemy_soldier` y conserva el balanceo. El orco y el Caballero Negro solo tienen un balanceo de cadera inferior a 0,06 u, sin avance.
 - El Ogro Bruto y la Balista Veloz ya usaban los clips `walk` y `run` del orco (`orc.glb`, versión ligera del Meshy Twin Axe Orc); los GLB originales de 18 MB no se incluyen.
 - Caché del service worker: `defensa-castillo-v8.16-animaciones`.
 
