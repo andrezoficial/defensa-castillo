@@ -33,7 +33,7 @@ const NK_RIVER = [[610, 500], [635, 470], [652, 445], [680, 420], [710, 402], [7
 /* ---------- Carga ---------- */
 function nkKeys() {
   const id = CURRENT_MAP.id, w = NK_FAM_W[id] || NK_FAM_W.valle, k = [];
-  for (const f in NK_TREES) if (w[f] > 0) k.push(...NK_TREES[f]);
+  for (const f in NK_TREES) if (w[f] > 0) for (const t of NK_TREES[f]) k.push(t, t + '_far'); // _far: versión de pocos polígonos para el bosque lejano
   k.push('Bush_Common', 'Bush_Common_Flowers', 'Rock_Medium_1', 'Rock_Medium_2', 'Rock_Medium_3', 'Fern_1', 'Plant_1', 'Plant_7',
     'Mushroom_Common', 'Mushroom_Laetiporus', 'Pebble_Round_1', 'Pebble_Round_2', 'Pebble_Round_3', 'Pebble_Square_1', 'Pebble_Square_2', 'Pebble_Square_3',
     'RockPath_Round_Small_1', 'RockPath_Round_Small_2', 'RockPath_Round_Small_3', 'RockPath_Round_Thin', 'RockPath_Round_Wide',
@@ -50,7 +50,7 @@ function nkLoad() {
   }))).then(res => {
     // Imprescindibles: camino, hierba y al menos un árbol. Si faltan, se usan las formas básicas.
     const need = ['RockPath_Round_Small_1', 'RockPath_Square_Small_1', 'Grass_Common_Short', 'Bush_Common', 'Rock_Medium_1'];
-    NK.ok = need.every(k => NK.src[k]) && keys.some(k => /Tree|Pine/.test(k) && NK.src[k]);
+    NK.ok = need.every(k => NK.src[k]) && keys.some(k => /Tree|Pine/.test(k) && !/_far$/.test(k) && NK.src[k]);
     const idn = CURRENT_MAP.id; let s = 7919; for (const c of idn) s = (s * 31 + c.charCodeAt(0)) >>> 0;
     NK.r = () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; // aleatorio propio y estable por mapa
     return NK.ok;
@@ -214,7 +214,7 @@ function nkBuildRoad() {
       addEdge(x, z, Math.atan2(-Math.sin(ang), Math.cos(ang)));
     }
   }
-  B.flush({ cast: false, receive: !low });
+  B.flush({ cast: false, receive: false });
   return stones.length;
 }
 
@@ -241,15 +241,16 @@ function nkBuildForest() {
     const tk = nkTreeKey(r(), r(), low); if (!tk) continue;
     // Los árboles de muchos polígonos salen menos: se reparte por peso.
     const sc = NK_TREE_S[tk.fam], s = sc[0] + r() * sc[1];
-    B.add(tk.key, p[0], .22 * s, p[1], s, s * (.92 + r() * .2), s, r() * 6.283, .82 + r() * .3); trees++;
-    // Sotobosque pegado a los troncos.
-    const q = r();
+    const far = p[2] > 6 && NK.src[tk.key + '_far']; // fuera del mapa: modelo simplificado
+    B.add(far ? tk.key + '_far' : tk.key, p[0], .22 * s, p[1], s, s * (.92 + r() * .2), s, r() * 6.283, .82 + r() * .3); trees++;
+    // Sotobosque pegado a los troncos (solo dentro del mapa y en la franja cercana).
+    const q = p[2] > 40 ? 1 : r();
     if (q < .34) { const a = r() * 6.283, d = 9 + r() * 9, s2 = 6.5 + r() * 4.5; U.add(r() < .6 ? 'Bush_Common' : 'Bush_Common_Flowers', p[0] + Math.cos(a) * d, .22 * s2, p[1] + Math.sin(a) * d, s2, s2 * (.85 + r() * .3), s2, r() * 6.283, .8 + r() * .3) }
     else if (q < .46) { const a = r() * 6.283, d = 8 + r() * 10, s2 = 3 + r() * 2.8; U.add('Rock_Medium_' + (1 + ((r() * 3) | 0)), p[0] + Math.cos(a) * d, .1 * s2, p[1] + Math.sin(a) * d, s2, s2 * .85, s2, r() * 6.283, .85 + r() * .2) }
     else if (q < .56 && p[2] > -10) { const a = r() * 6.283, d = 6 + r() * 12, s2 = .9 + r() * .6; U.add('Fern_1', p[0] + Math.cos(a) * d, .1, p[1] + Math.sin(a) * d, s2, s2, s2, r() * 6.283, .8 + r() * .3) }
     else if (q < .62 && (CURRENT_MAP.id === 'bosque' || CURRENT_MAP.id === 'paso')) { const a = r() * 6.283, d = 7 + r() * 8, s2 = 6 + r() * 4; U.add(r() < .5 ? 'Mushroom_Common' : 'Mushroom_Laetiporus', p[0] + Math.cos(a) * d, .1, p[1] + Math.sin(a) * d, s2, s2, s2, r() * 6.283, null) }
   }
-  B.flush({ cast: false, receive: !low });
+  B.flush({ cast: false, receive: false });
   U.flush({ cast: false, receive: false });
   return trees;
 }
@@ -364,5 +365,5 @@ function nkBuildProps(treeSpots) {
   // Rocas en la orilla del río del Valle y alrededor de la meta (antes eran dodecaedros).
   if (id === 'valle') for (let i = 0; i < 18; i++) { const t = i / 17, x = 610 + 190 * t, z = 500 - 112 * t + Math.sin(t * 11) * 8, side = i % 2 ? 1 : -1; rock(x + side * 4, z + side * 20, 2.4 + r() * 2.4) }
   for (let i = 0; i < 6; i++) { const s = 16 + i * 11, ang = i * 1.047; rock(742 + Math.cos(ang) * s, 150 + Math.sin(ang) * s, 2.6 + r() * 1.4) }
-  B.flush({ cast: !low, receive: !low });
+  B.flush({ cast: !low, receive: false });
 }

@@ -21,10 +21,43 @@ const Sound = (() => {
       mbus = ctx.createGain();
       mbus.connect(ctx.destination);
       applyVolume(true);
+      loadSamples();
     }
     if (ctx.state === 'suspended') ctx.resume();
     return true;
   }
+
+  // ---- V8.19: efectos con muestras reales (flechas y hechizos). Si no cargan, suenan los sintetizados de siempre. ----
+  const SAMPLE_FILES = {
+    arrow_a: 'assets/audio/arrow_a.wav', arrow_b: 'assets/audio/arrow_b.wav', arrow_c: 'assets/audio/arrow_c.wav', arrow_d: 'assets/audio/arrow_d.wav',
+    arrow_volley: 'assets/audio/arrow_volley.wav', spell_short: 'assets/audio/spell_short.wav', spell_long: 'assets/audio/spell_long.wav'
+  };
+  const ARROWS = ['arrow_a', 'arrow_b', 'arrow_c', 'arrow_d'];
+  const buffers = {};
+  let samplesRequested = false;
+  function loadSamples() {
+    if (!ctx || samplesRequested) return;
+    samplesRequested = true;
+    Object.keys(SAMPLE_FILES).forEach((k) => {
+      fetch(SAMPLE_FILES[k]).then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+        .then((ab) => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)))
+        .then((buf) => { buffers[k] = buf; })
+        .catch(() => { /* sin muestra: se usa el sonido sintetizado */ });
+    });
+  }
+  // Devuelve true si la muestra sonó (para que el llamador decida si usa el respaldo sintetizado).
+  function sample(name, vol = 0.6, rate = 1, delay = 0) {
+    const buf = buffers[name];
+    if (!buf || !ctx) return false;
+    if (muted) return true;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.playbackRate.value = rate;
+    const g = ctx.createGain(); g.gain.value = vol;
+    src.connect(g); g.connect(master);
+    src.start(ctx.currentTime + delay);
+    return true;
+  }
+  const rnd = (a, b) => a + Math.random() * (b - a);
 
   function setMuted(value) {
     muted = !!value;
@@ -95,9 +128,10 @@ const Sound = (() => {
     wave: () => { tone(196, 0.4, 'sawtooth', 0.13); tone(294, 0.5, 'sawtooth', 0.1, { delay: 0.18 }); },
     boss: () => { tone(82, 0.7, 'sawtooth', 0.2); tone(110, 0.8, 'sawtooth', 0.14, { delay: 0.25 }); noise(0.5, 0.1, 300); },
     shoot: (type) => {
-      if (!gate('shoot-' + type, 70)) return;
-      if (type === 'basic') { noise(0.07, 0.07, 3000, { type: 'highpass' }); tone(520, 0.06, 'triangle', 0.05, { slideTo: 300 }); }
-      else if (type === 'slow') tone(700, 0.18, 'sine', 0.07, { slideTo: 1200 });
+      if (!gate('shoot-' + type, type === 'basic' ? 110 : type === 'slow' ? 140 : 70)) return;
+      if (type === 'basic') {
+        if (sample(ARROWS[(Math.random() * ARROWS.length) | 0], 0.42, rnd(0.92, 1.08))) return; noise(0.07, 0.07, 3000, { type: 'highpass' }); tone(520, 0.06, 'triangle', 0.05, { slideTo: 300 }); }
+      else if (type === 'slow') { if (sample('spell_short', 0.4, rnd(0.95, 1.12))) return; tone(700, 0.18, 'sine', 0.07, { slideTo: 1200 }); }
       else { tone(95, 0.2, 'sine', 0.2, { slideTo: 55 }); noise(0.12, 0.06, 500); }
     },
     kill: (isBoss) => {
@@ -113,11 +147,11 @@ const Sound = (() => {
     freeze: () => { if (!gate('freeze', 120)) return; tone(1500, 0.18, 'sine', 0.06, { slideTo: 700 }); tone(2200, 0.12, 'triangle', 0.04, { delay: 0.05 }); },
     heal: () => { if (!gate('heal', 400)) return; tone(523, 0.14, 'sine', 0.05); tone(784, 0.18, 'sine', 0.05, { delay: 0.07 }); },
     stun: () => { if (!gate('stun', 120)) return; tone(220, 0.22, 'sawtooth', 0.1, { slideTo: 80 }); noise(0.15, 0.08, 2500, { type: 'highpass' }); },
-    spec: () => { [330, 440, 554, 740].forEach((f, i) => tone(f, 0.22, 'triangle', 0.15, { delay: i * 0.07 })); noise(0.25, 0.05, 4000, { type: 'highpass' }); },
-    meteorCall: () => { tone(900, 0.65, 'sawtooth', 0.09, { slideTo: 120 }); noise(0.6, 0.06, 1500); },
+    spec: () => { sample('spell_short', 0.5, 1.25); [330, 440, 554, 740].forEach((f, i) => tone(f, 0.22, 'triangle', 0.15, { delay: i * 0.07 })); noise(0.25, 0.05, 4000, { type: 'highpass' }); },
+    meteorCall: () => { sample('spell_long', 0.6, 0.8); tone(900, 0.65, 'sawtooth', 0.09, { slideTo: 120 }); noise(0.6, 0.06, 1500); },
     meteorHit: () => { tone(70, 0.6, 'sine', 0.3, { slideTo: 28 }); noise(0.7, 0.2, 700); tone(140, 0.3, 'sawtooth', 0.12, { slideTo: 50 }); },
-    freezeAll: () => { [1760, 1480, 1175, 880].forEach((f, i) => tone(f, 0.3, 'sine', 0.09, { delay: i * 0.05 })); noise(0.5, 0.06, 5000, { type: 'highpass' }); },
-    fury: () => { [262, 330, 392, 523].forEach((f, i) => tone(f, 0.2, 'sawtooth', 0.1, { delay: i * 0.06 })); tone(1046, 0.5, 'triangle', 0.1, { delay: 0.28 }); },
+    freezeAll: () => { sample('spell_long', 0.55, 1.3); [1760, 1480, 1175, 880].forEach((f, i) => tone(f, 0.3, 'sine', 0.09, { delay: i * 0.05 })); noise(0.5, 0.06, 5000, { type: 'highpass' }); },
+    fury: () => { sample('arrow_volley', 0.55, 1); [262, 330, 392, 523].forEach((f, i) => tone(f, 0.2, 'sawtooth', 0.1, { delay: i * 0.06 })); tone(1046, 0.5, 'triangle', 0.1, { delay: 0.28 }); },
     phase: () => { tone(70, 0.9, 'sawtooth', 0.22, { slideTo: 140 }); tone(105, 0.9, 'square', 0.1, { delay: 0.1, slideTo: 210 }); noise(0.7, 0.14, 500); },
     stomp: () => { tone(60, 0.45, 'sine', 0.3, { slideTo: 30 }); noise(0.35, 0.16, 400); },
     shieldBreak: () => { noise(0.3, 0.12, 4500, { type: 'highpass' }); tone(660, 0.3, 'triangle', 0.1, { slideTo: 150 }); },

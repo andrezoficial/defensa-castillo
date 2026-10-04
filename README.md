@@ -265,6 +265,19 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 - Caché del service worker: `defensa-castillo-v8.14-ogros` (necesario para que los dispositivos descarguen el `engine3d.js` nuevo).
 
 
+## V8.19 — Arqueros morados, efectos y música ambiente
+- **Arqueros morados:** figura teñida de violeta, base, aro y núcleo en tonos morados, y flechas lilas (`TOWER_DEFS.basic.color/proj`).
+- **Efectos con muestras reales** (`assets/audio/*.wav`, `Sound.sample` en `js/audio.js`): 4 silbidos de flecha al azar con ligera variación de tono para los arqueros, hechizo corto para el hechicero y hechizo largo para Meteoro y Congelar todo, lluvia de flechas para Furia y hechizo agudo al elegir una especialización. Si una muestra no carga, suena el sonido sintetizado de siempre.
+- **Música ambiente** (`js/music.js`): calma = pista celta (`music_calm.mp3`), batalla = pista medieval (`music_battle.mp3`), con fundido cruzado al cambiar. El jefe y el respaldo siguen siendo la música procedural. Se pausa y se atenúa con la pausa del juego y obedece al volumen y silencio de Ajustes.
+- Audios normalizados y recodificados (música a 128 kbps): 4,8 MB en total. Caché del service worker: `defensa-castillo-v8.19-audio-morado`.
+
+## V8.18b — Optimización del kit de naturaleza
+- Modelos simplificados con meshoptimizer: árboles y piedras de camino ~−60 % de polígonos. Los árboles tienen además una versión `_far` (~−85 %) que usa el bosque fuera del mapa.
+- Texturas a 512 px (7,5 MB → 2,3 MB), sin normal maps.
+- La vegetación ya no recibe sombras (menos coste por píxel) y el sotobosque solo se genera cerca del claro.
+- Medido en el Valle del Alba: 2,87 M → 1,30 M de triángulos por fotograma (−55 %); en modo móvil ≈0,63 M. Llamadas de dibujo: 268 → 288.
+- Caché del service worker: `defensa-castillo-v8.18b-optimizado`.
+
 ## V8.18 — Naturaleza (`js/nature18.js`, Stylized Nature MegaKit de Quaternius, CC0)
 - **Camino real:** dos capas planas de tierra (sin cajas) con piedras `RockPath_*` repartidas sin solaparse, borde de piedras y guijarros que rodea las esquinas, y hierba pegada a la calzada.
 - **Suelo:** hierba (`Grass_*`), tréboles y flores reales con `InstancedMesh`, más densos junto al camino; helechos y plantas bajas.

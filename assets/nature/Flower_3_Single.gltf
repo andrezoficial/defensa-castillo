@@ -1,1 +1,228 @@
-{"asset":{"generator":"Khronos glTF Blender I/O v4.0.44","version":"2.0"},"scene":0,"scenes":[{"name":"Scene","nodes":[0]}],"nodes":[{"mesh":0,"name":"Flower_3_Single"}],"materials":[{"alphaCutoff":0.20000000298023224,"alphaMode":"MASK","doubleSided":true,"name":"Leaves","pbrMetallicRoughness":{"baseColorTexture":{"index":0},"metallicFactor":0}},{"alphaCutoff":0.20000000298023224,"alphaMode":"MASK","doubleSided":true,"name":"Flowers","pbrMetallicRoughness":{"baseColorTexture":{"index":1},"metallicFactor":0}}],"meshes":[{"name":"Plane.020","primitives":[{"attributes":{"COLOR_0":0,"POSITION":1,"NORMAL":2,"TEXCOORD_0":3},"indices":4,"material":0},{"attributes":{"COLOR_0":5,"POSITION":6,"NORMAL":7,"TEXCOORD_0":8},"indices":9,"material":1}]}],"textures":[{"sampler":0,"source":0},{"sampler":0,"source":1}],"images":[{"mimeType":"image/png","name":"Leaves","uri":"Leaves.png"},{"mimeType":"image/png","name":"Flowers","uri":"Flowers.png"}],"accessors":[{"bufferView":0,"componentType":5123,"count":211,"normalized":true,"type":"VEC4"},{"bufferView":1,"componentType":5126,"count":211,"max":[0.42587125301361084,1.7716585397720337,0.35561174154281616],"min":[-0.48073863983154297,-0.018326954916119576,-0.520720362663269],"type":"VEC3"},{"bufferView":2,"componentType":5126,"count":211,"type":"VEC3"},{"bufferView":3,"componentType":5126,"count":211,"type":"VEC2"},{"bufferView":4,"componentType":5123,"count":810,"type":"SCALAR"},{"bufferView":5,"componentType":5123,"count":16,"normalized":true,"type":"VEC4"},{"bufferView":6,"componentType":5126,"count":16,"max":[0.42078328132629395,2.0498666763305664,0.3568156957626343],"min":[-0.27247604727745056,1.755362868309021,-0.3710358142852783],"type":"VEC3"},{"bufferView":7,"componentType":5126,"count":16,"type":"VEC3"},{"bufferView":8,"componentType":5126,"count":16,"type":"VEC2"},{"bufferView":9,"componentType":5123,"count":45,"type":"SCALAR"}],"bufferViews":[{"buffer":0,"byteLength":1688,"byteOffset":0,"target":34962},{"buffer":0,"byteLength":2532,"byteOffset":1688,"target":34962},{"buffer":0,"byteLength":2532,"byteOffset":4220,"target":34962},{"buffer":0,"byteLength":1688,"byteOffset":6752,"target":34962},{"buffer":0,"byteLength":1620,"byteOffset":8440,"target":34963},{"buffer":0,"byteLength":128,"byteOffset":10060,"target":34962},{"buffer":0,"byteLength":192,"byteOffset":10188,"target":34962},{"buffer":0,"byteLength":192,"byteOffset":10380,"target":34962},{"buffer":0,"byteLength":128,"byteOffset":10572,"target":34962},{"buffer":0,"byteLength":90,"byteOffset":10700,"target":34963}],"samplers":[{"magFilter":9729,"minFilter":9987}],"buffers":[{"byteLength":10792,"uri":"Flower_3_Single.bin"}]}
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 444,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 42,
+      "bufferView": 0,
+      "byteOffset": 888
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5123,
+      "count": 141,
+      "normalized": true,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 141,
+      "max": [
+        0.42587125301361084,
+        1.7716585397720337,
+        0.35561174154281616
+      ],
+      "min": [
+        -0.48073863983154297,
+        -0.018326954916119576,
+        -0.520720362663269
+      ],
+      "bufferView": 1,
+      "byteOffset": 8
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 141,
+      "bufferView": 1,
+      "byteOffset": 20
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 141,
+      "bufferView": 1,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5123,
+      "count": 15,
+      "normalized": true,
+      "bufferView": 2,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 15,
+      "max": [
+        0.42078328132629395,
+        2.0498666763305664,
+        0.3568156957626343
+      ],
+      "min": [
+        -0.27247604727745056,
+        1.755362868309021,
+        -0.3710358142852783
+      ],
+      "bufferView": 2,
+      "byteOffset": 8
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 15,
+      "bufferView": 2,
+      "byteOffset": 20
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 15,
+      "bufferView": 2,
+      "byteOffset": 28
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 972,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 972,
+      "byteLength": 5640,
+      "byteStride": 40,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 6612,
+      "byteLength": 600,
+      "byteStride": 40,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    },
+    {
+      "source": 1,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "Leaves",
+      "mimeType": "image/png",
+      "uri": "Leaves.png"
+    },
+    {
+      "name": "Flowers",
+      "mimeType": "image/png",
+      "uri": "Flowers.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Flower_3_Single.bin",
+      "byteLength": 7212
+    }
+  ],
+  "materials": [
+    {
+      "name": "Leaves",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.20000000298023224,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    },
+    {
+      "name": "Flowers",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.20000000298023224,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 1
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Plane.020",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 2,
+            "POSITION": 3,
+            "TEXCOORD_0": 4,
+            "NORMAL": 5
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 0
+        },
+        {
+          "attributes": {
+            "COLOR_0": 6,
+            "POSITION": 7,
+            "TEXCOORD_0": 8,
+            "NORMAL": 9
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 1
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Flower_3_Single",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

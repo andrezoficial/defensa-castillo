@@ -423,22 +423,22 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
   if(type==='basic'){
     // Archer: mayor contraste con el terreno + base de identidad visual.
     fig=inst('archer',34,0,true);
-    const navy=new THREE.Color(0x17324d);
-    const silver=new THREE.Color(0xd8e7f2);
+    const navy=new THREE.Color(0x8a3df0); // V8.19: arqueros morados (violeta vivo)
+    const silver=new THREE.Color(0xe6d8ff);
     (fig.userData.mats||[]).forEach((mm,i)=>{
       if(!mm.color)return;
       // Oscurece y enfría la silueta sin convertir piel/telas en un bloque plano.
       const c=mm.color.clone();
       const luma=(c.r+c.g+c.b)/3;
-      mm.color.lerp(navy,luma>.62?.72:.5);
-      if(mm.emissive)mm.emissive.lerp(navy,.18);
+      mm.color.lerp(navy,luma>.62?.8:.66);
+      if(mm.emissive)mm.emissive.lerp(navy,.5);
     });
-    const base=flat(new THREE.Mesh(geo('Cylinder',13.5,16,4),new THREE.MeshLambertMaterial({color:0x102235})));
+    const base=flat(new THREE.Mesh(geo('Cylinder',13.5,16,4),new THREE.MeshLambertMaterial({color:0x24104a})));
     base.position.y=2.4;
     base.castShadow=false;base.receiveShadow=true;
-    const rim=flat(new THREE.Mesh(geo('Ring',13.5,15.5,40),tmat(0x35b8ff,.95)));
+    const rim=flat(new THREE.Mesh(geo('Ring',13.5,15.5,40),tmat(0xb06bff,.95)));
     rim.position.y=4.55;
-    const core=flat(new THREE.Mesh(geo('Circle',7.8,32),tmat(0xf3c85b,.9)));
+    const core=flat(new THREE.Mesh(geo('Circle',7.8,32),tmat(0xe2c4ff,.9)));
     core.position.y=4.58;
     const badge=new THREE.Mesh(geo('Cylinder',4.2,5,6),new THREE.MeshLambertMaterial({color:silver}));
     badge.position.set(0,8.3,0);

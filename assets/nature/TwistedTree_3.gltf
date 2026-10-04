@@ -1,1 +1,224 @@
-{"asset":{"generator":"Khronos glTF Blender I/O v4.0.44","version":"2.0"},"scene":0,"scenes":[{"name":"Scene","nodes":[0]}],"nodes":[{"mesh":0,"name":"TwistedTree_3"}],"materials":[{"doubleSided":true,"name":"Bark_TwistedTree","pbrMetallicRoughness":{"baseColorTexture":{"index":0},"metallicFactor":0}},{"alphaCutoff":0.20000000298023224,"alphaMode":"MASK","doubleSided":true,"name":"Leaves_TwistedTree","pbrMetallicRoughness":{"baseColorTexture":{"index":1},"metallicFactor":0}}],"meshes":[{"name":"tree.040","primitives":[{"attributes":{"COLOR_0":0,"POSITION":1,"NORMAL":2,"TEXCOORD_0":3},"indices":4,"material":0},{"attributes":{"COLOR_0":5,"POSITION":6,"NORMAL":7,"TEXCOORD_0":8},"indices":9,"material":1}]}],"textures":[{"sampler":0,"source":0},{"sampler":0,"source":1}],"images":[{"mimeType":"image/png","name":"Bark_TwistedTree","uri":"Bark_TwistedTree.png"},{"mimeType":"image/png","name":"Leaves_TwistedTree_C","uri":"Leaves_TwistedTree_C.png"}],"accessors":[{"bufferView":0,"componentType":5126,"count":9405,"type":"VEC4"},{"bufferView":1,"componentType":5126,"count":9405,"max":[5.440822124481201,14.757431983947754,3.588460922241211],"min":[-3.039580821990967,-0.20147468149662018,-5.2718305587768555],"type":"VEC3"},{"bufferView":2,"componentType":5126,"count":9405,"type":"VEC3"},{"bufferView":3,"componentType":5126,"count":9405,"type":"VEC2"},{"bufferView":4,"componentType":5123,"count":22167,"type":"SCALAR"},{"bufferView":5,"componentType":5126,"count":5400,"type":"VEC4"},{"bufferView":6,"componentType":5126,"count":5400,"max":[6.867476463317871,15.871066093444824,4.985528945922852],"min":[-4.49001932144165,1.901405930519104,-6.520090103149414],"type":"VEC3"},{"bufferView":7,"componentType":5126,"count":5400,"type":"VEC3"},{"bufferView":8,"componentType":5126,"count":5400,"type":"VEC2"},{"bufferView":9,"componentType":5123,"count":8100,"type":"SCALAR"}],"bufferViews":[{"buffer":0,"byteLength":150480,"byteOffset":0,"target":34962},{"buffer":0,"byteLength":112860,"byteOffset":150480,"target":34962},{"buffer":0,"byteLength":112860,"byteOffset":263340,"target":34962},{"buffer":0,"byteLength":75240,"byteOffset":376200,"target":34962},{"buffer":0,"byteLength":44334,"byteOffset":451440,"target":34963},{"buffer":0,"byteLength":86400,"byteOffset":495776,"target":34962},{"buffer":0,"byteLength":64800,"byteOffset":582176,"target":34962},{"buffer":0,"byteLength":64800,"byteOffset":646976,"target":34962},{"buffer":0,"byteLength":43200,"byteOffset":711776,"target":34962},{"buffer":0,"byteLength":16200,"byteOffset":754976,"target":34963}],"samplers":[{"magFilter":9729,"minFilter":9987}],"buffers":[{"byteLength":771176,"uri":"TwistedTree_3.bin"}]}
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 6633,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 2640,
+      "bufferView": 0,
+      "byteOffset": 13268
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 1640,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1640,
+      "max": [
+        5.434545516967773,
+        14.757431983947754,
+        3.588460922241211
+      ],
+      "min": [
+        -3.033996820449829,
+        -0.20147468149662018,
+        -5.263739585876465
+      ],
+      "bufferView": 1,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 1640,
+      "bufferView": 1,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1640,
+      "bufferView": 1,
+      "byteOffset": 36
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 1848,
+      "bufferView": 2,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1848,
+      "max": [
+        6.114645004272461,
+        15.6766996383667,
+        4.331949710845947
+      ],
+      "min": [
+        -4.457679748535156,
+        1.901405930519104,
+        -6.463169097900391
+      ],
+      "bufferView": 2,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 1848,
+      "bufferView": 2,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1848,
+      "bufferView": 2,
+      "byteOffset": 36
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 18548,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 18548,
+      "byteLength": 78720,
+      "byteStride": 48,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 97268,
+      "byteLength": 88704,
+      "byteStride": 48,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    },
+    {
+      "source": 1,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "Bark_TwistedTree",
+      "mimeType": "image/png",
+      "uri": "Bark_TwistedTree.png"
+    },
+    {
+      "name": "Leaves_TwistedTree_C",
+      "mimeType": "image/png",
+      "uri": "Leaves_TwistedTree_C.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "TwistedTree_3.bin",
+      "byteLength": 185972
+    }
+  ],
+  "materials": [
+    {
+      "name": "Bark_TwistedTree",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    },
+    {
+      "name": "Leaves_TwistedTree",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.20000000298023224,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 1
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "tree.040",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 2,
+            "POSITION": 3,
+            "TEXCOORD_0": 4,
+            "NORMAL": 5
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 0
+        },
+        {
+          "attributes": {
+            "COLOR_0": 6,
+            "POSITION": 7,
+            "TEXCOORD_0": 8,
+            "NORMAL": 9
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 1
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "TwistedTree_3",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

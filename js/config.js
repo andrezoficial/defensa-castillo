@@ -30,7 +30,7 @@ const PATH_POINTS = CURRENT_MAP.path;
 // Definiciones de torres (estadísticas de nivel 1). Agregar una entrada
 // aquí y un botón en index.html es suficiente para incorporar una torre.
 const TOWER_DEFS = {
-  basic: { name: 'Torre de Arqueros', cost: 50, range: 120, rate: 600, dmg: 18, color: 0x8b5a2b, proj: 0xf0c14b, dtype: 'pierce' },
+  basic: { name: 'Torre de Arqueros', cost: 50, range: 120, rate: 600, dmg: 18, color: 0x7b3fe4, proj: 0xc58bff, dtype: 'pierce' },
   slow: { name: 'Torre del Hechicero', cost: 75, range: 100, rate: 900, dmg: 6, color: 0x4a6fa5, proj: 0x8ecfff, slow: true, dtype: 'magic' },
   area: { name: 'Catapulta', cost: 110, range: 95, rate: 1100, dmg: 14, color: 0x5c3d1f, proj: 0xd97a1f, area: true, dtype: 'siege' },
 };

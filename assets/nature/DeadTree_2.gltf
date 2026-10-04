@@ -1,1 +1,140 @@
-{"asset":{"generator":"Khronos glTF Blender I/O v4.0.44","version":"2.0"},"scene":0,"scenes":[{"name":"Scene","nodes":[0]}],"nodes":[{"mesh":0,"name":"DeadTree_2"}],"materials":[{"doubleSided":true,"name":"Bark_DeadTree","pbrMetallicRoughness":{"baseColorTexture":{"index":0},"metallicFactor":0}}],"meshes":[{"name":"tree.043","primitives":[{"attributes":{"COLOR_0":0,"POSITION":1,"NORMAL":2,"TEXCOORD_0":3},"indices":4,"material":0}]}],"textures":[{"sampler":0,"source":0}],"images":[{"mimeType":"image/png","name":"Bark_DeadTree","uri":"Bark_DeadTree.png"}],"accessors":[{"bufferView":0,"componentType":5126,"count":8635,"type":"VEC4"},{"bufferView":1,"componentType":5126,"count":8635,"max":[4.397274017333984,11.152676582336426,3.8556599617004395],"min":[-2.332343816757202,-0.3355545997619629,-2.522876024246216],"type":"VEC3"},{"bufferView":2,"componentType":5126,"count":8635,"type":"VEC3"},{"bufferView":3,"componentType":5126,"count":8635,"type":"VEC2"},{"bufferView":4,"componentType":5123,"count":19671,"type":"SCALAR"}],"bufferViews":[{"buffer":0,"byteLength":138160,"byteOffset":0,"target":34962},{"buffer":0,"byteLength":103620,"byteOffset":138160,"target":34962},{"buffer":0,"byteLength":103620,"byteOffset":241780,"target":34962},{"buffer":0,"byteLength":69080,"byteOffset":345400,"target":34962},{"buffer":0,"byteLength":39342,"byteOffset":414480,"target":34963}],"samplers":[{"magFilter":9729,"minFilter":9987}],"buffers":[{"byteLength":453824,"uri":"DeadTree_2.bin"}]}
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 6285,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 1594,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1594,
+      "max": [
+        4.397274017333984,
+        11.151476860046387,
+        3.847757577896118
+      ],
+      "min": [
+        -2.3274967670440674,
+        -0.3355545997619629,
+        -2.5073838233947754
+      ],
+      "bufferView": 1,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 1594,
+      "bufferView": 1,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1594,
+      "bufferView": 1,
+      "byteOffset": 36
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 12572,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 12572,
+      "byteLength": 76512,
+      "byteStride": 48,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "Bark_DeadTree",
+      "mimeType": "image/png",
+      "uri": "Bark_DeadTree.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "DeadTree_2.bin",
+      "byteLength": 89084
+    }
+  ],
+  "materials": [
+    {
+      "name": "Bark_DeadTree",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "tree.043",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 1,
+            "POSITION": 2,
+            "TEXCOORD_0": 3,
+            "NORMAL": 4
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 0
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "DeadTree_2",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

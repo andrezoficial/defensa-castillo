@@ -1,1 +1,132 @@
-{"asset":{"generator":"Khronos glTF Blender I/O v4.0.44","version":"2.0"},"scene":0,"scenes":[{"name":"Scene","nodes":[0]}],"nodes":[{"mesh":0,"name":"Pebble_Square_3"}],"materials":[{"doubleSided":true,"name":"PathRocks","pbrMetallicRoughness":{"baseColorTexture":{"index":0},"metallicFactor":0}}],"meshes":[{"name":"Cube.017_Retopology.003","primitives":[{"attributes":{"POSITION":0,"NORMAL":1,"TEXCOORD_0":2},"indices":3,"material":0}]}],"textures":[{"sampler":0,"source":0}],"images":[{"mimeType":"image/png","name":"PathRocks_Diffuse","uri":"PathRocks_Diffuse.png"}],"accessors":[{"bufferView":0,"componentType":5126,"count":108,"max":[0.18668454885482788,0.1508151739835739,0.15225757658481598],"min":[-0.18665164709091187,-0.00811817031353712,-0.16649161279201508],"type":"VEC3"},{"bufferView":1,"componentType":5126,"count":108,"type":"VEC3"},{"bufferView":2,"componentType":5126,"count":108,"type":"VEC2"},{"bufferView":3,"componentType":5123,"count":156,"type":"SCALAR"}],"bufferViews":[{"buffer":0,"byteLength":1296,"byteOffset":0,"target":34962},{"buffer":0,"byteLength":1296,"byteOffset":1296,"target":34962},{"buffer":0,"byteLength":864,"byteOffset":2592,"target":34962},{"buffer":0,"byteLength":312,"byteOffset":3456,"target":34963}],"samplers":[{"magFilter":9729,"minFilter":9987}],"buffers":[{"byteLength":3768,"uri":"Pebble_Square_3.bin"}]}
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 90,
+      "max": [
+        0.18652373552322388,
+        0.148762509226799,
+        0.15225757658481598
+      ],
+      "min": [
+        -0.1847173571586609,
+        -0.006753761786967516,
+        -0.16649161279201508
+      ],
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 90,
+      "bufferView": 0,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 90,
+      "bufferView": 0,
+      "byteOffset": 20
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 90,
+      "bufferView": 1,
+      "byteOffset": 0
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 2880,
+      "byteStride": 32,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2880,
+      "byteLength": 360,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "PathRocks_Diffuse",
+      "mimeType": "image/png",
+      "uri": "PathRocks_Diffuse.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Pebble_Square_3.bin",
+      "byteLength": 3240
+    }
+  ],
+  "materials": [
+    {
+      "name": "PathRocks",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Cube.017_Retopology.003",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "TEXCOORD_0": 1,
+            "NORMAL": 2
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 3
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Pebble_Square_3",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

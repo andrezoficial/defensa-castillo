@@ -8,12 +8,50 @@ const Music = (() => {
   const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
   let ctx = null, out = null, noiseBuf = null, timer = null, mood = null, step = 0, next = 0;
 
+  // ---- V8.19: música ambiente con archivos (calma = celta, batalla = medieval). El jefe y el respaldo siguen siendo procedurales. ----
+  const FILES = { calm: 'assets/audio/music_calm.mp3', battle: 'assets/audio/music_battle.mp3' };
+  const LEVEL = { calm: 1.6, battle: 1.5 };
+  const tracks = {};
+  let fbus = null, pgain = null;
+  function ensureFiles() {
+    if (fbus) return;
+    fbus = ctx.createGain(); fbus.connect(Sound.musicBus());
+    for (const k in FILES) {
+      const el = new Audio(); el.src = FILES[k]; el.loop = true; el.preload = 'auto';
+      const g = ctx.createGain(); g.gain.value = 0;
+      try { ctx.createMediaElementSource(el).connect(g); g.connect(fbus); } catch (e) { continue; }
+      const t = tracks[k] = { el, g, failed: false, want: false, stopT: null };
+      el.addEventListener('error', () => { t.failed = true; applyMood(); });
+      // Se "desbloquea" dentro del primer gesto del jugador para poder reanudarla luego sin gesto (móviles).
+      const p = el.play(); if (p && p.then) p.then(() => { if (!t.want) el.pause(); }).catch(() => {});
+    }
+  }
+  const fileFor = (m) => { const t = tracks[m]; return t && !t.failed ? t : null; };
+  function applyMood() {
+    if (!ctx || !pgain) return;
+    const now = ctx.currentTime, active = fileFor(mood);
+    for (const k in tracks) {
+      const t = tracks[k];
+      if (t === active) {
+        clearTimeout(t.stopT); t.want = true;
+        const p = t.el.play(); if (p && p.catch) p.catch(() => {});
+        t.g.gain.setTargetAtTime(LEVEL[k], now, 1.2);
+      } else if (t.want) {
+        t.want = false; t.g.gain.setTargetAtTime(0, now, 0.8);
+        t.stopT = setTimeout(() => { if (!t.want) t.el.pause(); }, 3500);
+      }
+    }
+    pgain.gain.setTargetAtTime(active ? 0 : 1, now, active ? 0.6 : 0.8);
+  }
+
   function ensure() {
     if (ctx) return true;
     if (!Sound.unlock()) return false;
     ctx = Sound.ctx();
     out = ctx.createGain();
-    out.connect(Sound.musicBus());
+    pgain = ctx.createGain();
+    out.connect(pgain); pgain.connect(Sound.musicBus());
+    ensureFiles();
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -62,7 +100,7 @@ const Music = (() => {
     }
   }
   function tick() {
-    if (!ctx || !mood || ctx.state !== 'running' || Settings.get('music') <= 0 || Sound.isMuted()) { if (ctx) next = Math.max(next, ctx.currentTime); return; }
+    if (!ctx || !mood || fileFor(mood) || ctx.state !== 'running' || Settings.get('music') <= 0 || Sound.isMuted()) { if (ctx) next = Math.max(next, ctx.currentTime); return; }
     const sd = 60 / MOODS[mood].bpm / 2;
     if (next < ctx.currentTime) next = ctx.currentTime + 0.05;
     while (next < ctx.currentTime + 0.4) { playStep(mood, step++, next, sd); next += sd; }
@@ -71,10 +109,11 @@ const Music = (() => {
     if (!ensure()) return;
     if (m === mood) return;
     mood = m; if (m) step = Math.ceil(step / 8) * 8; // cambia al inicio de un compás
+    applyMood();
     if (!timer) timer = setInterval(tick, 120);
   }
   const start = () => { if (!mood) setMood('calm'); };
-  const duck = (on) => { if (out) out.gain.setTargetAtTime(on ? 0.35 : 1, ctx.currentTime, 0.1); };
+  const duck = (on) => { if (out) { out.gain.setTargetAtTime(on ? 0.35 : 1, ctx.currentTime, 0.1); if (fbus) fbus.gain.setTargetAtTime(on ? 0.35 : 1, ctx.currentTime, 0.1); } };
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
     if (document.hidden) ctx.suspend(); else if (!Sound.isMuted()) ctx.resume();
