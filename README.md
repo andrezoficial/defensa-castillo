@@ -265,6 +265,15 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 - Caché del service worker: `defensa-castillo-v8.14-ogros` (necesario para que los dispositivos descarguen el `engine3d.js` nuevo).
 
 
+## V8.18 — Naturaleza (`js/nature18.js`, Stylized Nature MegaKit de Quaternius, CC0)
+- **Camino real:** dos capas planas de tierra (sin cajas) con piedras `RockPath_*` repartidas sin solaparse, borde de piedras y guijarros que rodea las esquinas, y hierba pegada a la calzada.
+- **Suelo:** hierba (`Grass_*`), tréboles y flores reales con `InstancedMesh`, más densos junto al camino; helechos y plantas bajas.
+- **Bosque:** los 20 árboles del kit (comunes, pinos, retorcidos y secos; la mezcla cambia por mapa) en bosque denso en los bordes, que sigue fuera del mapa, y claro en la zona de juego con ~10 árboles sueltos que se balancean.
+- **Rocas y arbustos reales** (`Rock_Medium_*`, `Bush_Common*`, guijarros, setas) en lugar de esferas y dodecaedros.
+- Móvil (`S.lowPower`): menos árboles, piedras y hierba, sin árboles retorcidos. Texturas a 1024 px y sin normal maps.
+- Si el kit no carga, `engine3d.js` conserva las formas básicas anteriores. Assets en `assets/nature/` (sustituye a `assets/nature-trees/`).
+- Caché del service worker: `defensa-castillo-v8.18-naturaleza`.
+
 ## V8.17  Torres más grandes
 - Arqueros y hechicero pasan de tamaño 21/20 a **34**, y la catapulta de 38 a **50** (`towerModel`, `js/engine3d.js`), para que no se vean diminutos junto a los enemigos (~68 u de alto, frente a ~38 u antes).
 - Se subieron también el punto de disparo (`top`: arquero 58, hechicero 62, catapulta 40) y la sombra de la torre, para que flechas y hechizos salgan de la altura correcta.

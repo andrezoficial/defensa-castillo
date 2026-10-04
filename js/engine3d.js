@@ -76,7 +76,7 @@ function addValleyRiver(){
     const w=20+R()*6, m=part(strip,'Plane',[L,w],0x2d6f87,(a[0]+b[0])/2,0.42,(a[1]+b[1])/2,0,ang);m.rotation.x=-Math.PI/2;m.castShadow=false;m.receiveShadow=true;
   }
   scene.add(strip);
-  for(let i=0;i<26;i++){const t=i/25,x=610+(800-610)*t,z=500+(388-500)*t+Math.sin(t*11)*8;part(scene,'Dodecahedron',[3.5+R()*4,0],i%3?0x6c746d:0x81857b,x,2.0,z,0,R()*6.2,R()*.2)}
+  if(!NK.ok)for(let i=0;i<26;i++){const t=i/25,x=610+(800-610)*t,z=500+(388-500)*t+Math.sin(t*11)*8;part(scene,'Dodecahedron',[3.5+R()*4,0],i%3?0x6c746d:0x81857b,x,2.0,z,0,R()*6.2,R()*.2)}
   // Puente de madera: el camino sigue siendo plenamente transitable; esto es decoración visual.
   const bridge=new THREE.Group();bridge.position.set(662,0,430);
   for(const sx of [-22,22]){part(bridge,'Box',[10,4,56],0x6a4528,sx,4,0,0,0);part(bridge,'Box',[7,5,56],0x8a5e38,sx*.72,7,0,0,0)}
@@ -88,8 +88,8 @@ function addBattlefieldProps(){
   const zones=[
     [20,20,250,180],[250,20,570,170],[20,300,330,490],[350,300,610,485],[690,230,790,360]
   ];
-  for(const [x0,z0,x1,z1] of zones){for(let i=0;i<5;i++){const x=x0+R()*(x1-x0),z=z0+R()*(z1-z0);if(distToPath(x,z)<78||((x>700&&z<235)))continue;shrubCluster(x,z,.65+R()*.45)}}
-  pebbleField(15,15,785,485,0x74776f,45,1,.0);
+  if(!NK.ok)for(const [x0,z0,x1,z1] of zones){for(let i=0;i<5;i++){const x=x0+R()*(x1-x0),z=z0+R()*(z1-z0);if(distToPath(x,z)<78||((x>700&&z<235)))continue;shrubCluster(x,z,.65+R()*.45)}}
+  if(!NK.ok)pebbleField(15,15,785,485,0x74776f,45,1,.0);
   // Montículos bajos para romper la planitud visual; no interfieren con el plano de selección.
   for(let i=0;i<18;i++){const x=30+R()*740,z=30+R()*430;if(distToPath(x,z)<82)continue;const m=part(scene,'Cylinder',[18+R()*16,3+R()*4,12],0x4b6938,x,2,z);m.scale.y=.45;m.castShadow=true;m.receiveShadow=true}
 
@@ -104,6 +104,65 @@ function addBattlefieldProps(){
     g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
     scene.add(g);
   }
+}
+/* ---------- Cobertura del suelo (V8.18): hierba, flores y tréboles con instancing ---------- */
+// Todo es procedural (sin modelos): ~10 000 matas en 1 sola llamada de dibujo, más flores y tréboles.
+// Usa su propio generador aleatorio para no alterar la posición de árboles y props existentes.
+function addGroundCover(){
+  const low=!!S.lowPower, id=CURRENT_MAP.id, lush=id==='valle'||id==='bosque';
+  let gs=9157+id.length*131;const r=()=>(gs=(gs*1664525+1013904223)%4294967296)/4294967296;
+  const N={grass:low?(lush?4200:1800):(lush?10500:4500),fringe:low?260:520,flowers:lush?(low?240:720):0,clover:lush?(low?450:1300):0};
+  const riverPts=id==='valle'?[[610,500],[635,470],[652,445],[680,420],[710,402],[742,392],[800,388]]:[];
+  const blocked=(x,z)=>(x>718&&z<245)||riverPts.some(p=>Math.hypot(p[0]-x,p[1]-z)<27);
+  const dum=new THREE.Object3D(),col=new THREE.Color();
+
+  // Geometría con color por vértice (base oscura → punta clara) y normales hacia arriba para integrarse con el suelo.
+  const g0=new THREE.Color(CURRENT_MAP.ground);
+  const baseC=g0.clone().multiplyScalar(.5),tipC=g0.clone().multiplyScalar(1.5).lerp(new THREE.Color(0xd8e27a),lush?.2:.08);
+  const tuft=(()=>{const P=[],C=[],Nn=[];const blades=5;
+    for(let k=0;k<blades;k++){const a=k*(Math.PI/blades)*1.9+.3,ca=Math.cos(a),sa=Math.sin(a),w=.55+.18*(k%2),h=3.6+1.3*((k*7)%3)/2,lean=(k%2?.9:-.7);
+      const v=[[-w,0,0],[w,0,0],[lean,h,.35]];
+      v.forEach((p,i)=>{P.push(p[0]*ca+p[2]*sa,p[1],-p[0]*sa+p[2]*ca);const c=i<2?baseC:tipC;C.push(c.r,c.g,c.b);Nn.push(0,1,0)})}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(Nn,3));return g})();
+
+  // Une geometrías con un color propio cada una (para flores y tréboles).
+  const merge=list=>{const P=[],C=[],Nn=[];for(const it of list){const g=it.g.index?it.g.toNonIndexed():it.g;g.computeVertexNormals();
+    const p=g.attributes.position.array,n=g.attributes.normal.array;for(let i=0;i<p.length;i++){P.push(p[i]);Nn.push(n[i])}
+    for(let i=0;i<p.length/3;i++)C.push(it.c.r,it.c.g,it.c.b)}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(Nn,3));return g};
+  const make=(geom,count,shadow)=>{const m=new THREE.InstancedMesh(geom,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide}),count);
+    m.frustumCulled=false;m.castShadow=false;m.receiveShadow=!!shadow;m.userData.groundCover=true;return m};
+  const put=(m,i,x,y,z,sx,sy,ry,tint)=>{dum.position.set(x,y,z);dum.rotation.set(0,ry,0);dum.scale.set(sx,sy,sx);dum.updateMatrix();m.setMatrixAt(i,dum.matrix);
+    if(tint!==undefined){col.setRGB(tint,tint,tint);m.setColorAt(i,col)}};
+
+  // 1) Matas de hierba: más densas cerca del camino y con claros suaves lejos de él.
+  const grass=make(tuft,N.grass+N.fringe,!low);let gi=0;
+  for(let t=0;t<N.grass*7&&gi<N.grass;t++){const x=6+r()*788,z=6+r()*488;if(blocked(x,z))continue;const d=distToPath(x,z);if(d<34)continue;
+    if(r()>.28+.72*Math.exp(-(d-34)/42))continue;const s=.7+r()*1.1;put(grass,gi++,x,.05,z,s,s*(.75+r()*.7),r()*6.28,.82+r()*.3)}
+  // Borde del camino: franja de hierba pegada a la calzada.
+  const P=PATH_POINTS;
+  for(let i=0;i<P.length-1&&gi<N.grass+N.fringe;i++){const a=P[i],b=P[i+1],dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy),nx=-dy/L,nz=dx/L;
+    for(const side of [-1,1])for(let u=0;u<L&&gi<N.grass+N.fringe;u+=5+r()*4){const off=33+r()*7,x=a.x+dx*(u/L)+nx*side*off,z=a.y+dy*(u/L)+nz*side*off;
+      if(blocked(x,z)||distToPath(x,z)<32)continue;const s=1+r()*.9;put(grass,gi++,x,.05,z,s,s*(.9+r()*.6),r()*6.28,.9+r()*.25)}}
+  grass.count=gi;grass.instanceMatrix.needsUpdate=true;if(grass.instanceColor)grass.instanceColor.needsUpdate=true;scene.add(grass);
+
+  // 2) Tréboles: discos diminutos pegados al suelo, agrupados en la hierba.
+  if(N.clover){const cl=new THREE.Color(lush?0x3f8a3c:0x4a6a3a).multiplyScalar(id==='bosque'?.7:1);
+    const parts=[[0,0],[1.5,.4],[-.4,1.5]].map(o=>{const g=new THREE.CircleGeometry(1.25,6);g.rotateX(-Math.PI/2);g.translate(o[0],.12,o[1]);return{g,c:cl}});
+    const cm=make(merge(parts),N.clover,false);let ci=0;
+    for(let t=0;t<N.clover*8&&ci<N.clover;t++){const x=6+r()*788,z=6+r()*488;if(blocked(x,z))continue;const d=distToPath(x,z);if(d<35)continue;if(r()>.3+.7*Math.exp(-(d-35)/55))continue;
+      const s=.8+r()*.9;put(cm,ci++,x,0,z,s,1,r()*6.28,.8+r()*.35)}
+    cm.count=ci;cm.instanceMatrix.needsUpdate=true;if(cm.instanceColor)cm.instanceColor.needsUpdate=true;scene.add(cm)}
+
+  // 3) Flores: tres colores por mapa, en ramilletes alrededor de unos cuantos centros.
+  if(N.flowers){const heads=id==='bosque'?[0xb79bff,0xdfeaff,0xff9fd0]:[0xf6f2e6,0xffd84a,0xf08fb6];
+    const stemC=new THREE.Color(0x3c7a35).multiplyScalar(id==='bosque'?.7:1);
+    const centers=[];for(let t=0;t<400&&centers.length<(low?26:46);t++){const x=20+r()*760,z=20+r()*460;if(!blocked(x,z)&&distToPath(x,z)>44)centers.push([x,z])}
+    heads.forEach((hc,hi)=>{const stem=new THREE.CylinderGeometry(.14,.18,3,4);stem.translate(0,1.5,0);const head=new THREE.SphereGeometry(.95,6,4);head.scale(1,.7,1);head.translate(0,3.2,0);
+      const fm=make(merge([{g:stem,c:stemC},{g:head,c:new THREE.Color(hc)}]),Math.ceil(N.flowers/3)+4,false);let fi=0;
+      for(let t=0;t<N.flowers*4&&fi<Math.ceil(N.flowers/3);t++){const c=centers[(r()*centers.length)|0];if(!c)break;const a=r()*6.28,rad=Math.sqrt(r())*22,x=c[0]+Math.cos(a)*rad,z=c[1]+Math.sin(a)*rad;
+        if(x<5||x>795||z<5||z>495||blocked(x,z)||distToPath(x,z)<36)continue;const s=.8+r()*.7;put(fm,fi++,x,0,z,s,s*(.8+r()*.5),r()*6.28,.9+r()*.2)}
+      fm.count=fi;fm.instanceMatrix.needsUpdate=true;if(fm.instanceColor)fm.instanceColor.needsUpdate=true;scene.add(fm)})}
 }
 function buildWorld(){
   S.hemi=new THREE.HemisphereLight(0xd9edff,0x344526,.92);scene.add(S.hemi);
@@ -122,6 +181,7 @@ function buildWorld(){
 
   // Camino: base de suelo compacto + capa de tierra texturizada + grava irregular.
   const P=PATH_POINTS;
+  if(NK.ok)nkBuildRoad();else{
   for(let i=0;i<P.length-1;i++){
     const a=P[i],b=P[i+1],dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy),ang=Math.atan2(-dy,dx),nx=-dy/L,nz=dx/L;
     const base=part(scene,'Box',[L+78,1.0,70],CURRENT_MAP.pathCol[0],(a.x+b.x)/2,.5,(a.y+b.y)/2,0,ang);base.castShadow=false;base.receiveShadow=true;
@@ -132,23 +192,27 @@ function buildWorld(){
     for(let k=0;k<Math.max(3,Math.floor(L/85));k++){const t=(k+.35+R()*.35)/(Math.max(4,Math.floor(L/85))),px=a.x+(b.x-a.x)*t+nx*(R()-.5)*28,pz=a.y+(b.y-a.y)*t+nz*(R()-.5)*28;const s=.9+R()*1.7;part(scene,'Dodecahedron',[2.1*s,0],0x6c5437,px,1.9,pz,0,R()*6.2,R()*.18)}
   }
   for(let i=1;i<P.length-1;i++){const pt=P[i];const base=new THREE.Mesh(geo('Cylinder',38,32,1),mat(CURRENT_MAP.pathCol[0]));base.position.set(pt.x,.55,pt.y);base.receiveShadow=true;scene.add(base);const road=new THREE.Mesh(geo('Cylinder',29,28,1),texturedMat(CURRENT_MAP.pathCol[1],90+i,'road'));road.position.set(pt.x,1.08,pt.y);road.receiveShadow=true;scene.add(road)}
+  }
 
   // Hitos de entrada y llegada.
   const start=P[0];for(const sx of [-20,20]){part(scene,'Box',[9,38,9],0x593a23,start.x+sx,19,start.y);part(scene,'Cone',[11,13,7],CURRENT_MAP.pathCol[1],start.x+sx,41,start.y)}
   const startRing=flat(new THREE.Mesh(geo('Ring',25,3,28),tmat(0xeac873,.24)));startRing.position.set(start.x,1.5,start.y);scene.add(startRing);
   const goalRing=flat(new THREE.Mesh(geo('Ring',48,4,36),tmat(0xffcf70,.22)));goalRing.position.set(742,1.4,150);scene.add(goalRing);
-  for(let i=0;i<6;i++){const s=16+i*11,ang=i*1.047;const stone=part(scene,'Dodecahedron',[3.2,0],0x77766f,742+Math.cos(ang)*s,3,150+Math.sin(ang)*s);stone.receiveShadow=true}
+  if(!NK.ok)for(let i=0;i<6;i++){const s=16+i*11,ang=i*1.047;const stone=part(scene,'Dodecahedron',[3.2,0],0x77766f,742+Math.cos(ang)*s,3,150+Math.sin(ang)*s);stone.receiveShadow=true}
 
   // Árboles 3D: las posiciones se mantienen fuera de la ruta y se sustituyen por
   // variantes del Stylized Nature MegaKit. La carga es diferida para no bloquear el arranque.
-  const treeSpots=[];for(let i=0;i<1500&&treeSpots.length<34;i++){const x=18+R()*764,y=18+R()*464;if(distToPath(x,y)<70||(x>700&&y<225)||treeSpots.some(s=>Math.hypot(s.x-x,s.y-y)<29))continue;treeSpots.push({x,y,seed:R()})}
-  queueNatureTrees(treeSpots);
+  const treeCap=NK.ok?(S.lowPower?6:10):34;
+  const treeSpots=[];for(let i=0;i<1500&&treeSpots.length<treeCap;i++){const x=18+R()*764,y=18+R()*464;if(distToPath(x,y)<(NK.ok?84:70)||(x>700&&y<225)||(NK.ok&&!nkFree(x,y,84,nkHouses()))||treeSpots.some(s=>Math.hypot(s.x-x,s.y-y)<(NK.ok?72:29)))continue;treeSpots.push({x,y,seed:R()})}
+  // Con el Stylized Nature MegaKit (js/nature18.js): pocos árboles sueltos en el claro, bosque instanciado en los bordes y rocas/arbustos reales.
+  if(NK.ok){nkLoneTrees(treeSpots);nkBuildForest();nkBuildProps(treeSpots)}else queueNatureTrees(treeSpots);
   // Relleno ligero de suelo: conserva arbustos y rocas, sin competir con los nuevos árboles.
-  treeSpots.forEach((s,i)=>{
+  if(!NK.ok)treeSpots.forEach((s,i)=>{
     if(i%2!==0){for(let j=0;j<2;j++)part(scene,'Sphere',[5.5+R()*3,4.2+R()*2.5,4.4],j?0x3f6e36:0x315b2c,s.x+(R()-.5)*14,4+R()*4,s.y+(R()-.5)*12)}
     if(i%4===0){const rock=part(scene,'Dodecahedron',[4.5+R()*4,0],0x73766f,s.x+(R()-.5)*18,3,s.y+(R()-.5)*18);rock.receiveShadow=true}
   });
 
+  if(NK.ok)nkBuildGround();else addGroundCover();
   addBattlefieldProps();
   addValleyRiver();
   mergeStatic();
@@ -631,7 +695,7 @@ async function initGame(){
   let failed=false;
   try{
     if(!renderer){try{renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'})}catch(err){const e=new Error('webgl');e.code='webgl';throw e}}
-    await loadModels(p=>{if(!failed)setLoadState('loading',p)});
+    await Promise.all([loadModels(p=>{if(!failed)setLoadState('loading',p)}),nkLoad()]);
   }catch(err){
     failed=true;console.error(err);booting=false;
     setLoadState('error',0,err&&err.code==='webgl'?'TU NAVEGADOR NO PUEDE MOSTRAR GRÁFICOS 3D (WEBGL).':'NO SE PUDIERON CARGAR LOS MODELOS 3D. Si abriste el archivo directamente, usa un servidor local (ver README).');return}
