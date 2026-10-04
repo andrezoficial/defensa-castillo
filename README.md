@@ -265,6 +265,11 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 - Caché del service worker: `defensa-castillo-v8.14-ogros` (necesario para que los dispositivos descarguen el `engine3d.js` nuevo).
 
 
+## V8.17  Torres más grandes
+- Arqueros y hechicero pasan de tamaño 21/20 a **34**, y la catapulta de 38 a **50** (`towerModel`, `js/engine3d.js`), para que no se vean diminutos junto a los enemigos (~68 u de alto, frente a ~38 u antes).
+- Se subieron también el punto de disparo (`top`: arquero 58, hechicero 62, catapulta 40) y la sombra de la torre, para que flechas y hechizos salgan de la altura correcta.
+- Caché del service worker: `defensa-castillo-v8.17-torres`.
+
 ## V8.16  Animaciones de los soldados activas
 - **Corregido**: los enemigos que usan `enemy_soldier.glb` (Goblin, Torre de Asedio, Plaga, Saboteador, Espectro) tenían clip de caminar pero nunca se reproducía: el mezclador se guardaba en el grupo interno (`inst`) y el bucle de enemigos lo busca en `e.mesh` (grupo externo). Ahora `enemyModel` lo enlaza en `js/engine3d.js`.
 - **Corregido (root motion)**: el clip de Mixamo del soldado desplaza la cadera ~1,8 u hacia delante en cada ciclo y la devuelve de golpe, lo que sacaba a los enemigos del camino y los hacía desaparecer. `stripRootMotion()` (`js/engine3d.js`) deja la cadera fija en el eje de avance al cargar `enemy_soldier` y conserva el balanceo. El orco y el Caballero Negro solo tienen un balanceo de cadera inferior a 0,06 u, sin avance.

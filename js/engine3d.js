@@ -355,10 +355,10 @@ function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),src=MODEL
   if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(k==='enemy_soldier'&&src.animations&&src.animations.length){const mixer=new THREE.AnimationMixer(m);g.userData.animMixer=mixer;const clip=src.animations.find(a=>/walk|run/i.test(a.name))||src.animations[0];const action=mixer.clipAction(clip);action.reset();action.play();g.userData.animAction=action;}if(window.V69Animations&&k!=='enemy_soldier')window.V69Animations.attach(g,k);return g}
 function towerModel(type){const g=new THREE.Group();let top,fig;
   // V7: sin torres, solo el personaje sobre el suelo con una sombra suave
-  const sh=flat(new THREE.Mesh(geo('Circle',1,24),tmat(0x000000,.28)));sh.position.y=1.4;sh.scale.setScalar(type==='area'?22:12);g.add(sh);
+  const sh=flat(new THREE.Mesh(geo('Circle',1,24),tmat(0x000000,.28)));sh.position.y=1.4;sh.scale.setScalar(type==='area'?27:16);g.add(sh);
   if(type==='basic'){
     // Archer: mayor contraste con el terreno + base de identidad visual.
-    fig=inst('archer',21,0,true);
+    fig=inst('archer',34,0,true);
     const navy=new THREE.Color(0x17324d);
     const silver=new THREE.Color(0xd8e7f2);
     (fig.userData.mats||[]).forEach((mm,i)=>{
@@ -381,10 +381,10 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
     badge.rotation.x=Math.PI/2;
     badge.castShadow=false;
     g.add(base,core,rim,badge,fig);
-    top=38;
+    top=58;
   }
-  else if(type==='slow'){fig=inst('wizard',20);g.add(fig);top=40}
-  else{g.add(inst('catapult',38));top=30}
+  else if(type==='slow'){fig=inst('wizard',34);g.add(fig);top=62}
+  else{g.add(inst('catapult',50));top=40}
   return{g,top,fig}}
 const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
 // modelo, tamaño, color de tinte, intensidad del tinte, opacidad
