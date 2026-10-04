@@ -396,6 +396,7 @@ function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,
   if(c[2]!=null){const tc=new THREE.Color(c[2]);mats.forEach(mm=>mm.color.lerp(tc,c[3]))}
   if(c[4]!=null)mats.forEach(mm=>{mm.transparent=true;mm.opacity=c[4];mm.depthWrite=false});
   g.add(m);g.userData.v69=m.userData.v69; // el motor llama a V69Animations.trigger/state con e.mesh (grupo externo)
+  if(m.userData.animMixer){g.userData.animMixer=m.userData.animMixer;g.userData.animAction=m.userData.animAction} // V8.16: el soldado anima con su propio mezclador; el bucle de enemigos lo lee de e.mesh (grupo externo), no del interno
   if(key==='boss'){aura=flat(new THREE.Mesh(geo('Ring',30,37,32),tmat(0xe7bd5b,.2)));aura.scale.setScalar(sc);aura.position.y=1.5;g.add(aura)}
   else if(key==='healer'){aura=flat(new THREE.Mesh(geo('Ring',HEAL_RADIUS-4,HEAL_RADIUS,48),tmat(0x55ff99,.2)));aura.position.y=1.5;g.add(aura);
     icon=new THREE.Group();icon.position.y=EN.healer.hb-6;icon.add(new THREE.Mesh(geo('Box',9,3,3),bmat(0x66ff99)),new THREE.Mesh(geo('Box',3,9,3),bmat(0x66ff99)));g.add(icon)}

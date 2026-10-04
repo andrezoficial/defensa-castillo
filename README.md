@@ -265,6 +265,11 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 - Caché del service worker: `defensa-castillo-v8.14-ogros` (necesario para que los dispositivos descarguen el `engine3d.js` nuevo).
 
 
+## V8.16  Animaciones de los soldados activas
+- **Corregido**: los enemigos que usan `enemy_soldier.glb` (Goblin, Torre de Asedio, Plaga, Saboteador, Espectro) tenían clip de caminar pero nunca se reproducía: el mezclador se guardaba en el grupo interno (`inst`) y el bucle de enemigos lo busca en `e.mesh` (grupo externo). Ahora `enemyModel` lo enlaza en `js/engine3d.js`.
+- El Ogro Bruto y la Balista Veloz ya usaban los clips `walk` y `run` del orco (`orc.glb`, versión ligera del Meshy Twin Axe Orc); los GLB originales de 18 MB no se incluyen.
+- Caché del service worker: `defensa-castillo-v8.16-animaciones`.
+
 ## V8.15 — Pulido visual (`js/visual8.js`)
 - **Hierba, flores y piedrecillas** instanciadas (≈1.000 objetos en 3 llamadas de dibujo) que evitan el camino y el castillo; paleta por mapa.
 - **Sombras de nubes** que cruzan el mapa (más tenues de noche; quietas con «reducir movimiento»).
