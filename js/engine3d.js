@@ -419,14 +419,88 @@ function pickZombie(m,idx){const keep=ZOMBIE_VARIANTS[idx][0],rm=[];
 function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),src=MODELS[k];if(!src||!src.scene){console.warn('Modelo 3D no disponible:',k);return g}const m=cloneModel(src.scene),mats=[];m.scale.setScalar(size);m.rotation.y=ry;
   let fx=MODEL_FIX[k];
   if(k==='zombie'){const vi=zv!=null?zv:Math.floor(Math.random()*10),v=pickZombie(m,vi);fx=[-v[1],0,-v[2]];g.userData.zv=vi}
-  if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});g.add(m);g.userData.mats=mats;if(k==='enemy_soldier'&&src.animations&&src.animations.length){const mixer=new THREE.AnimationMixer(m);g.userData.animMixer=mixer;const clip=src.animations.find(a=>/walk|run/i.test(a.name))||src.animations[0];const action=mixer.clipAction(clip);action.reset();action.play();g.userData.animAction=action;}if(window.V69Animations&&k!=='enemy_soldier')window.V69Animations.attach(g,k);return g}
+  if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});
+  if(own && ['archer','wizard','goblin','ogre','orc','orcrun','raider','enemy_soldier'].includes(k)) v45GradeMaterials(m,k==='archer'?'archer':k==='wizard'?'wizard':k);
+  g.add(m);g.userData.mats=mats;if(k==='enemy_soldier'&&src.animations&&src.animations.length){const mixer=new THREE.AnimationMixer(m);g.userData.animMixer=mixer;const clip=src.animations.find(a=>/walk|run/i.test(a.name))||src.animations[0];const action=mixer.clipAction(clip);action.reset();action.play();g.userData.animAction=action;}if(window.V69Animations&&k!=='enemy_soldier')window.V69Animations.attach(g,k);return g}
+/* ---------- V45: presentación visual móvil de héroes y enemigos ---------- */
+function v45GradeMaterials(root, role){
+  const palettes={
+    hero:{dark:0x1b2430,metal:0xb8c4ce,accent:0x3b82f6},
+    archer:{dark:0x193b35,metal:0xc8a75a,accent:0x2d8b73},
+    wizard:{dark:0x25204f,metal:0xc6a64b,accent:0x62d9ff},
+    goblin:{dark:0x2b3a25,metal:0x8d6b3d,accent:0x76b83f},
+    ogre:{dark:0x24231f,metal:0x5f6670,accent:0xb13b3b},
+    brute:{dark:0x20231d,metal:0x6d7680,accent:0xb73737},
+    raider:{dark:0x242a35,metal:0x9b7a45,accent:0xc84a3a},
+    swarm:{dark:0x29331f,metal:0x9b7a32,accent:0xe0b341},
+    saboteur:{dark:0x202238,metal:0x68708a,accent:0x8a73d6},
+    healer:{dark:0x173c34,metal:0xb7d7c9,accent:0x55d98a},
+    wraith:{dark:0x18253a,metal:0x9dc9ff,accent:0x8fd3ff}
+  }[role]||{dark:0x252a30,metal:0x9aa5ae,accent:0x8fa6b8};
+  root.traverse(o=>{
+    if(!o.isMesh||!o.material)return;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    mats.forEach(m=>{
+      if(!m.color)return;
+      const c=m.color.clone(), l=(c.r+c.g+c.b)/3;
+      if(l<.20)m.color.lerp(new THREE.Color(palettes.dark),.35);
+      else if(l>.78)m.color.lerp(new THREE.Color(palettes.metal),.18);
+      m.roughness=.82;
+      m.metalness=Math.min(.35,m.metalness||0);
+      m.needsUpdate=true;
+    });
+  });
+}
+function v45Badge(g, role, h, color){
+  const badge=part(g,'Cylinder',[Math.max(2.4,h*.045),Math.max(2.4,h*.045),Math.max(1.4,h*.035),8],color,0,h*.48,Math.max(8,h*.16),Math.PI/2,0,0);
+  badge.castShadow=false;
+  const ring=flat(new THREE.Mesh(geo('Ring',Math.max(2.8,h*.055),Math.max(3.5,h*.07),20),tmat(color,.82)));
+  ring.position.set(0,h*.46,Math.max(8,h*.16));ring.castShadow=false;g.add(ring);
+}
+function enemyWardrobe(role, fig){
+  if(!fig||fig.userData.v45Wardrobe)return;
+  fig.userData.v45Wardrobe=true;
+  const box=new THREE.Box3().setFromObject(fig), sz=new THREE.Vector3();box.getSize(sz);
+  const h=Math.max(28,sz.y||42), w=Math.max(14,sz.x||20), d=Math.max(10,sz.z||16);
+  const add=(k,a,c,x,y,z,rx=0,ry=0,rz=0)=>part(fig,k,a,c,x,y,z,rx,ry,rz); const addE=(r,c,x,y,z)=>{const m=add('Sphere',[1,10,8],c,x,y,z);m.scale.set(r[0],r[1],r[2]);return m};
+  const C={goblin:0x76b83f,ogre:0xb33b3b,brute:0xc03939,raider:0xc49b4c,swarm:0xe0b341,saboteur:0x8f7de0,healer:0x55d98a,wraith:0x8fd3ff};
+  const accent=C[role]||0xaab4bd;
+  if(role==='goblin'||role==='swarm'){
+    addE([w*.24,2.8,d*.20],0x76b83f,0,h*.58,d*.08);
+    add('Cone',[w*.12,6,5],0x9bc85c,-w*.16,h*.70,d*.03,0,0,-.18);
+    add('Cone',[w*.12,6,5],0x9bc85c,w*.16,h*.70,d*.03,0,0,.18);
+    add('Box',[w*.30,Math.max(3,h*.12),d*.25],0x51402c,0,h*.42,d*.05);
+    v45Badge(fig,role,h,accent);
+  }else if(role==='ogre'||role==='brute'){
+    add('Box',[w*.56,Math.max(5,h*.18),d*.42],0x262a2d,0,h*.42,d*.03);
+    addE([w*.18,3.4,d*.18],0x5f6670,-w*.25,h*.52,d*.02);
+    addE([w*.18,3.4,d*.18],0x5f6670,w*.25,h*.52,d*.02);
+    add('Box',[w*.16,Math.max(4,h*.14),d*.10],accent,0,h*.50,d*.26);
+    add('Cone',[w*.10,6,5],0x8f9aa4,-w*.18,h*.72,d*.05,0,0,-.16);
+    add('Cone',[w*.10,6,5],0x8f9aa4,w*.18,h*.72,d*.05,0,0,.16);
+    v45Badge(fig,role,h,accent);
+  }else if(role==='raider'||role==='saboteur'){
+    add('Box',[w*.34,Math.max(3,h*.15),d*.30],0x2c3440,0,h*.45,d*.04);
+    addE([w*.18,2.8,d*.18],0x9b7a45,-w*.25,h*.52,0);
+    addE([w*.18,2.8,d*.18],0x9b7a45,w*.25,h*.52,0);
+    add('Cylinder',[1.6,1.6,h*.24,7],accent,w*.30,h*.31,d*.04,0,0,-.18);
+    v45Badge(fig,role,h,accent);
+  }else if(role==='healer'){
+    add('Torus',[w*.20,.8,8,14],accent,0,h*.57,d*.08,Math.PI/2,0,0);
+    addE([3.4,3.4,3.4],accent,0,h*.66,d*.16);
+    v45Badge(fig,role,h,accent);
+  }else if(role==='wraith'){
+    add('Torus',[w*.24,.8,10,16],accent,0,h*.50,0,Math.PI/2,0,0);
+    addE([3.2,3.2,3.2],accent,0,h*.68,d*.05);
+  }
+}
 function heroWardrobe(type,fig){
   if(!fig||fig.userData.v30Wardrobe)return;
   fig.userData.v30Wardrobe=true;
   const box=new THREE.Box3().setFromObject(fig), size=new THREE.Vector3(), center=new THREE.Vector3();
   box.getSize(size); box.getCenter(center);
   const h=Math.max(40,size.y||56), w=Math.max(18,size.x||28), d=Math.max(12,size.z||20);
-  const add=(k,a,c,x,y,z,rx=0,ry=0,rz=0)=>part(fig,k,a,c,x,y,z,rx,ry,rz);
+  const add=(k,a,c,x,y,z,rx=0,ry=0,rz=0)=>part(fig,k,a,c,x,y,z,rx,ry,rz); const addE=(r,c,x,y,z)=>{const m=add('Sphere',[1,10,8],c,x,y,z);m.scale.set(r[0],r[1],r[2]);return m};
   if(type==='basic'){
     // V31: arquero de élite — silueta, armadura y arma más reconocibles a distancia.
     // Mantiene el modelo/animaciones originales; los añadidos son geometría low-poly.
@@ -435,10 +509,10 @@ function heroWardrobe(type,fig){
     add('Box',[w*.40,2.4,d*.40],0xc59a52,0,h*.36,0);
     add('Box',[w*.25,2.0,d*.20],0x7a4a2a,0,h*.32,-d*.23,0,0,0);
     // Capa corta sobre los hombros.
-    const mantle=add('Sphere',[w*.31,4.6,d*.30],0x244b63,0,h*.54,-d*.04);mantle.scale.y=.42;
+    const mantle=addE([w*.31,12,8],0x244b63,0,h*.54,-d*.04);mantle.scale.y=.42;
     // Capucha ligera y broche.
     add('Cone',[w*.18,w*.20,8],0x183044,0,h*.78,0);
-    add('Sphere',[2.2,2.2,2.2],0xd7b25c,0,h*.59,d*.27);
+    addE([2.2,2.2,2.2],0xd7b25c,0,h*.59,d*.27);
     // Carcaj trasero y flechas.
     const quiver=add('Cylinder',[3.5,4.2,13,8],0x5a321f,-w*.27,h*.35,-d*.32,.18,0,.12);
     quiver.scale.y=1.15;
@@ -447,8 +521,8 @@ function heroWardrobe(type,fig){
     add('Cylinder',[3.0,3.4,6,8],0x4c2d1c,-w*.24,h*.40,d*.02,0,0,Math.PI/2);
     add('Cylinder',[3.0,3.4,6,8],0x4c2d1c,w*.24,h*.40,d*.02,0,0,Math.PI/2);
     // Hombreras metálicas y peto central: lectura de héroe incluso con cámara alejada.
-    add('Sphere',[5.0,2.8,5.0],0x7f8b91,-w*.24,h*.56,0);
-    add('Sphere',[5.0,2.8,5.0],0x7f8b91,w*.24,h*.56,0);
+    addE([5.0,2.8,5.0],0x7f8b91,-w*.24,h*.56,0);
+    addE([5.0,2.8,5.0],0x7f8b91,w*.24,h*.56,0);
     add('Box',[w*.24,h*.22,2.8],0x3d5360,0,h*.46,d*.24,0,0,0);
     // Cinta de hombro cruzada y broche.
     add('Box',[2.8,h*.27,2.2],0xb08b46,-w*.05,h*.50,d*.28,0,0,-.22);
@@ -458,29 +532,29 @@ function heroWardrobe(type,fig){
     bow.scale.x=.62;
     add('Cylinder',[.55,.55,w*.48,6],0xd8d2bf,w*.38,h*.38,d*.20,0,0,Math.PI/2);
     // Pequeña insignia de guardia real.
-    add('Cone',[3.0,3.0,2.8,6],0x4f79a0,0,h*.63,d*.30,Math.PI/2,0,0);
+    add('Cylinder',[3.0,3.0,2.8,6],0x4f79a0,0,h*.63,d*.30,Math.PI/2,0,0);
   }else if(type==='slow'){
     // V31: hechicero de élite — silueta alta, ornamentos y foco arcano.
     // Hechicero: túnica, manto, cinturón dorado y capucha con foco mágico.
-    add('Cone',[w*.34,w*.40,h*.40,10],0x24234d,0,h*.23,0);
+    add('Cylinder',[w*.34,w*.40,h*.40,10],0x24234d,0,h*.23,0);
     add('Box',[w*.43,2.6,d*.43],0xb28a43,0,h*.39,0);
-    const cloak=add('Sphere',[w*.37,5.0,d*.35],0x303b78,0,h*.52,-d*.06);cloak.scale.y=.46;
+    const cloak=addE([w*.37,12,8],0x303b78,0,h*.52,-d*.06);cloak.scale.y=.46;
     add('Cone',[w*.20,w*.23,10],0x1b2042,0,h*.78,0);
-    add('Sphere',[2.8,2.8,2.8],0x73d9ff,0,h*.60,d*.25);
+    addE([2.8,2.8,2.8],0x73d9ff,0,h*.60,d*.25);
     // Amuleto luminoso y hombreras.
-    add('Sphere',[2.0,2.0,2.0],0x86e8ff,-w*.25,h*.55,d*.12);
-    add('Sphere',[2.0,2.0,2.0],0x86e8ff,w*.25,h*.55,d*.12);
+    addE([2.0,2.0,2.0],0x86e8ff,-w*.25,h*.55,d*.12);
+    addE([2.0,2.0,2.0],0x86e8ff,w*.25,h*.55,d*.12);
     add('Torus',[w*.24,1.15,8,16],0xc7a34e,0,h*.58,0,Math.PI/2,0,0);
     // Bastón corto, discreto para no tapar la animación de ataque.
     add('Cylinder',[1.3,1.3,h*.46,8],0x5a3826,w*.34,h*.25,d*.10,0,0,-.10);
-    add('Sphere',[3.0,3.0,3.0],0x5bdcff,w*.34,h*.49,d*.10);
+    addE([3.0,3.0,3.0],0x5bdcff,w*.34,h*.49,d*.10);
     // Hombreras ornamentales y ribetes para separar claramente al mago del arquero.
-    add('Sphere',[4.6,2.6,4.6],0x5b3e91,-w*.25,h*.55,0);
-    add('Sphere',[4.6,2.6,4.6],0x5b3e91,w*.25,h*.55,0);
+    addE([4.6,2.6,4.6],0x5b3e91,-w*.25,h*.55,0);
+    addE([4.6,2.6,4.6],0x5b3e91,w*.25,h*.55,0);
     add('Torus',[w*.26,1.0,8,18],0x78d9ff,0,h*.66,d*.02,Math.PI/2,0,0);
     // Bastón más reconocible y cristal arcano en la punta.
     add('Cylinder',[1.5,1.5,h*.58,8],0x5a3826,w*.38,h*.28,d*.08,0,0,-.10);
-    add('Sphere',[4.2,4.2,4.2],0x65dcff,w*.38,h*.59,d*.08);
+    addE([4.2,4.2,4.2],0x65dcff,w*.38,h*.59,d*.08);
     // Runa flotante sobre el foco: pocos polígonos, mucha lectura visual.
     const rune=add('Torus',[4.5,.65,8,16],0x8cecff,0,h*.72,d*.18,Math.PI/2,0,0);
     rune.scale.set(.72,1,.72);
@@ -524,7 +598,7 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
   return{g,top,fig}}
 const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
 // modelo, tamaño, color de tinte, intensidad del tinte, opacidad
-const MODEL_CFG={goblin:['enemy_soldier',38],brute:['orc',40],raider:['orcrun',32,0xd4af37,.4],ogre:['enemy_soldier',38],swarm:['enemy_soldier',25,0xe0b341,.45],saboteur:['enemy_soldier',44,0x4a4a66,.55],healer:['wizard',18,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55]};
+const MODEL_CFG={goblin:['goblin',38],brute:['orc',40],raider:['raider',34,0xd4af37,.28],ogre:['ogre',44],swarm:['goblin',25,0xe0b341,.25],saboteur:['raider',42,0x4a4a66,.38],healer:['wizard',18,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55]};
 function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,icon,sc=1;
   if(key==='boss'){
     const mk=bd.model&&MODELS[bd.model[0]]?bd.model[0]:'solani';
@@ -535,7 +609,9 @@ function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,
   const m=inst(c[0],c[1],Math.PI/2,true,key==='brute'?5+Math.floor(Math.random()*5):null),mats=m.userData.mats;
   if(c[2]!=null){const tc=new THREE.Color(c[2]);mats.forEach(mm=>mm.color.lerp(tc,c[3]))}
   if(c[4]!=null)mats.forEach(mm=>{mm.transparent=true;mm.opacity=c[4];mm.depthWrite=false});
-  g.add(m);g.userData.v69=m.userData.v69; // el motor llama a V69Animations.trigger/state con e.mesh (grupo externo)
+  g.add(m);
+  enemyWardrobe(key,m);
+  g.userData.v69=m.userData.v69; // el motor llama a V69Animations.trigger/state con e.mesh (grupo externo)
   if(m.userData.animMixer){g.userData.animMixer=m.userData.animMixer;g.userData.animAction=m.userData.animAction} // V8.16: el soldado anima con su propio mezclador; el bucle de enemigos lo lee de e.mesh (grupo externo), no del interno
   if(key==='boss'){aura=flat(new THREE.Mesh(geo('Ring',30,37,32),tmat(0xe7bd5b,.2)));aura.scale.setScalar(sc);aura.position.y=1.5;g.add(aura)}
   else if(key==='healer'){aura=flat(new THREE.Mesh(geo('Ring',HEAL_RADIUS-4,HEAL_RADIUS,48),tmat(0x55ff99,.2)));aura.position.y=1.5;g.add(aura);

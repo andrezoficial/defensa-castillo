@@ -1,0 +1,13 @@
+V45 — MOBILE HEROES & ENEMIES VISUAL PASS
+
+Objetivo: mejorar exclusivamente el aspecto visual de héroes y enemigos en móvil.
+
+Cambios:
+- Enemigos ahora usan sus modelos específicos existentes cuando están disponibles:
+  goblin, raider y ogre dejan de reutilizar el modelo genérico enemy_soldier.
+- Se añadió una pasada de materiales para mejorar contraste, rugosidad y lectura visual.
+- Se añadieron accesorios low-poly diferenciadores para goblins, ogros, brutos, raiders, saboteadores, sanadores y espectros.
+- Se mantiene el orco con identidad verde/armadura oscura/detalles rojos.
+- Héroes reciben una gradación visual más consistente para pantalla móvil.
+- No se modifica combate, economía, tutorial, controles, progresión ni reglas de oleadas.
+- No se añaden modelos externos ni dependencias nuevas.
