@@ -1,0 +1,11 @@
+V46 — High Fidelity Mobile
+
+Base: defensa-castillo-v45-fix.zip
+
+Visual-only character pass. Preserves the V45-1 service-worker fix and V43 mutation-observer fix.
+- Removed V45 added low-poly wardrobe/accessory geometry from hero/enemy presentation.
+- Preserves original model textures and colors with conservative material grading.
+- Uses higher-detail existing project models for generic enemy variants where available (enemy_soldier/darkknight/orc/wizard).
+- Disables flat shading and recomputes normals for smoother lighting.
+- Improves anisotropic filtering, shadow response and mobile render quality.
+- No gameplay, economy, tutorial, camera logic or touch logic changes.
