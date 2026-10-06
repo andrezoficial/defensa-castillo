@@ -672,7 +672,8 @@ function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,
   if(c[2]!=null){const tc=new THREE.Color(c[2]);mats.forEach(mm=>mm.color.lerp(tc,c[3]))}
   if(c[4]!=null)mats.forEach(mm=>{mm.transparent=true;mm.opacity=c[4];mm.depthWrite=false});
   g.add(m);
-  enemyWardrobe(key,m);
+  // V50: no añadir geometría procedural a los personajes; los GLB originales ya contienen su silueta/equipamiento.
+  // Esto evita volver a introducir el aspecto low-poly que se corrigió en V46/V47.
   g.userData.v69=m.userData.v69; // el motor llama a V69Animations.trigger/state con e.mesh (grupo externo)
   if(m.userData.animMixer){g.userData.animMixer=m.userData.animMixer;g.userData.animAction=m.userData.animAction} // V8.16: el soldado anima con su propio mezclador; el bucle de enemigos lo lee de e.mesh (grupo externo), no del interno
   if(key==='boss'){aura=flat(new THREE.Mesh(geo('Ring',30,37,32),tmat(0xe7bd5b,.2)));aura.scale.setScalar(sc);aura.position.y=1.5;g.add(aura)}
@@ -703,12 +704,28 @@ function damageEnemy(e,dmg,dtype,o){o=o||{};if(e.dead)return;
   damageNumber(e,shown,{crit:o.crit,tick:o.tick,soak:soak&&dmg<=0,force:e.hp<=0});
   if(!o.tick&&window.V8Visual)V8Visual.hit(e,dtype,o.crit);if(!o.tick&&window.CombatV25)CombatV25.hit(e,dtype,!!o.crit);
   if(o.crit){sfx.crit();burst(e.x,22,e.y,0xffe27a,6,55)}
-  if(e.hp<=0){e.dead=true;if(window.CombatV11)CombatV11.death(e);if(window.CombatV25)CombatV25.death(e);if(window.V69Animations)V69Animations.trigger(e.mesh,'death');const bounty=Math.round(e.reward*Progress.goldMul());GameState.gold+=bounty;GameState.goldEarned+=bounty;GameState.kills++;Progress.onKill(e);goldPop(e.x,e.y,bounty);updateHUD();sfx.kill(e.isBoss);deathFx(e);
-    dropBar(e);const m=e.mesh,s0=e.sc*S.u;addFx(240,p=>{m.scale.setScalar(Math.max(.01,s0*(1-p)));m.position.y=p*10},()=>{scene.remove(m);freeEnemy(e)});return}
+  if(e.hp<=0){e.dead=true;removeEnemyProxy(e);if(window.CombatV11)CombatV11.death(e);if(window.CombatV25)CombatV25.death(e);if(window.V69Animations)V69Animations.trigger(e.mesh,'death');const bounty=Math.round(e.reward*Progress.goldMul());GameState.gold+=bounty;GameState.goldEarned+=bounty;GameState.kills++;Progress.onKill(e);goldPop(e.x,e.y,bounty);updateHUD();sfx.kill(e.isBoss);deathFx(e);
+    dropBar(e);const m=e.mesh,s0=e.sc*S.u;addFx(240,p=>{m.scale.setScalar(Math.max(.01,s0*(1-p)));m.position.y=p*10},()=>{scene.remove(m);removeEnemyProxy(e);freeEnemy(e)});return}
   const ph=e.bd&&e.bd.phases[e.phaseIdx];if(ph&&e.hp<=e.maxHp*ph.at){if(window.V69Animations)V69Animations.trigger(e.mesh,'phase');startBossPhase(e,ph)}}
-function dropBar(e){scene.remove(e.bar);e.fg.material.dispose()}
-function freeEnemy(e){e.mats.forEach(m=>m.dispose())}
-function killEnemyOffPath(e){e.dead=true;scene.remove(e.mesh);dropBar(e);freeEnemy(e)}
+function dropBar(e){
+  if(!e||!e.bar)return;
+  scene.remove(e.bar);
+  if(e.fg&&e.fg.material)e.fg.material.dispose();
+  if(e.bar.children){e.bar.children.forEach(ch=>{if(ch.material&&ch.material!==e.fg?.material)ch.material.dispose?.()})}
+  e.bar=null;
+}
+function removeEnemyProxy(e){
+  if(!e||!e.lodProxy)return;
+  scene.remove(e.lodProxy);
+  e.lodProxy.visible=false;
+  e.lodProxy=null;
+}
+function freeEnemy(e){
+  if(!e)return;
+  removeEnemyProxy(e);
+  (e.mats||[]).forEach(m=>m&&m.dispose&&m.dispose());
+}
+function killEnemyOffPath(e){e.dead=true;scene.remove(e.mesh);removeEnemyProxy(e);dropBar(e);freeEnemy(e)}
 function healerTick(e,dt){e.pulseT-=dt;const k=dt/1000*HEAL_RATE;let any=false;
   const target=window.CombatV28&&e.v28HealTarget&&!e.v28HealTarget.dead?e.v28HealTarget:null;
   if(target&&target.hp<target.maxHp){target.hp=Math.min(target.maxHp,target.hp+target.maxHp*k*(target.isBoss?.3:1));any=true}

@@ -1,0 +1,17 @@
+V50 — BUGFIX GENERAL
+
+Base: defensa-castillo-v49-visual-fix
+
+Correcciones:
+- Eliminación de accesorios geométricos procedurales en enemigos: evita volver a introducir el aspecto low-poly.
+- Limpieza correcta de proxies LOD al morir o salir del mapa; evita enemigos fantasma y consumo acumulado de memoria.
+- Limpieza de materiales de barras de vida al eliminar enemigos.
+- Caché PWA ampliada con todos los GLB locales usados por el juego, incluidos darkknight, solani, wyvern y zombie.
+- Service Worker actualizado a defensa-castillo-v50-bugfix.
+- Se conservan las correcciones de materiales/iluminación de V49 y los modelos de héroes/enemigos de V47/V48.
+- No se modifica el balance, tutorial, economía ni controles.
+
+Validación:
+- Todos los JS pasan node --check.
+- Todas las entradas CORE del service worker existen.
+- Todos los scripts cargados por index.html están incluidos en la caché.
