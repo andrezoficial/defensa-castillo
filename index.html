@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Defensa del Castillo — V7</title>
+<title>Defensa del Castillo — V14</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%B0%3C/text%3E%3C/svg%3E">
 <meta name="theme-color" content="#071016">
 <link rel="manifest" href="manifest.webmanifest">
@@ -38,7 +38,7 @@
       <div id="loadStatus" class="load-status" role="status" aria-live="polite"></div>
       <button id="retryLoadBtn" class="secondary-action" hidden>REINTENTAR</button>
       <div class="rotate-hint">📱 Puedes jugar en vertical u horizontal</div>
-      <div class="version-chip" id="bestChip">V6 · EDICIÓN 3D</div>
+      <div class="version-chip" id="bestChip">V16 · MUNDO DINÁMICO</div>
     </div>
     <div id="realmPanel" class="howto-panel realm-panel">
       <button id="closeRealm" class="close-modal">×</button>
@@ -62,6 +62,7 @@
         <div><b>06 · ESPECIALIZA</b><span>Al nivel máximo, cada torre elige entre dos caminos distintos (francotirador o ráfaga, glacial o tormenta, bombardera o incendiaria). Toca una opción para ver qué hace y otra vez para confirmar.</span></div>
         <div><b>07 · NUEVOS ENEMIGOS</b><span>Plaga (rápida y numerosa), Saboteador (desactiva torres), Chamán (cura a los demás) y Espectro (resiste flechas y asedio: usa magia).</span></div>
       </div>
+      <div class="howto-tut"><button id="tutStartBtn" type="button" class="primary-action"><span>🎓</span> <b>TUTORIAL INTERACTIVO</b></button><small>Aprende jugando una oleada de práctica</small></div>
       <p class="howto-keys">1–3 torres · Z/X/C habilidades · Espacio oleada · P pausa · F velocidad ×2 · Q/E girar cámara · rueda zoom · clic derecho cancela · con una torre elegida: U mejorar · V vender · T objetivo</p>
     </div>
   </div>
@@ -141,7 +142,15 @@
 <script src="js/progress.js"></script>
 <script src="js/ambience.js"></script>
 <script src="js/visual8.js"></script>
+<script src="js/visual10.js"></script>
+<script src="js/visual11.js"></script>
+<script src="js/visual12.js"></script>
+<script src="js/visual13.js"></script>
+<script src="js/visual14.js"></script>
+<script src="js/visual15.js"></script>
+<script src="js/visual16.js"></script>
 <script src="js/save.js"></script>
+<script src="js/tutorial.js"></script>
 <script src="js/main.js"></script>
 <script>if("serviceWorker" in navigator && location.protocol !== "file:"){navigator.serviceWorker.register("sw.js").catch(()=>{});}</script>
 </body>

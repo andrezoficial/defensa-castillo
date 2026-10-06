@@ -217,6 +217,7 @@ function buildWorld(){
   addValleyRiver();
   mergeStatic();
   buildCastle();
+  if(window.V14Visual)V14Visual.init(scene,S);if(window.V15Visual)V15Visual.init(scene,S);
   GameState.buildSlots=computeBuildSlots();const sm=tmat(0xbfeaff,.5),dm=new THREE.Object3D();dm.rotation.x=-Math.PI/2;S.slots=new THREE.InstancedMesh(geo('Ring',3.4,5,24),sm,GameState.buildSlots.length);S.slots.frustumCulled=false;S.slots.visible=false;scene.add(S.slots);
   S.slotOn=GameState.buildSlots.map(sl=>{dm.position.set(sl.x,1.6,sl.y);dm.updateMatrix();return dm.matrix.clone()});S.slotOff=new THREE.Matrix4().makeScale(0,0,0);
   const pv=S.prev=new THREE.Group();pv.visible=false;scene.add(pv);pv.rng=flat(new THREE.Mesh(geo('Ring',.97,1,64),tmat(0x5be3b0,.85)));pv.fill=flat(new THREE.Mesh(geo('Circle',1,48),tmat(0x5be3b0,.12)));pv.col=new THREE.Mesh(geo('Cylinder',7,7,36,20),tmat(0x5be3b0,.3));pv.rng.position.y=pv.fill.position.y=1.8;pv.col.position.y=18;pv.add(pv.rng,pv.fill,pv.col);
@@ -262,7 +263,7 @@ const NATURE_TREE_KEYS=['CommonTree_1','CommonTree_2','CommonTree_3','Pine_1','P
 function loadNatureTreeKey(k,L){
   return new Promise((ok)=>{
     if(NATURE_TREE_MODELS[k]) return ok(NATURE_TREE_MODELS[k]);
-    L.load('assets/nature-trees/'+k+'.gltf',g=>{
+    L.load('assets/nature/'+k+'.gltf',g=>{
       NATURE_TREE_MODELS[k]=g;
       ok(g);
     },undefined,e=>{
@@ -488,11 +489,11 @@ function damageEnemy(e,dmg,dtype,o){o=o||{};if(e.dead)return;
   dmg*=1-((RESIST[e.key]||{})[dtype]||0);if(o.crit)dmg*=CRIT_MULT;
   const shown=dmg;let soak=false;GameState.totalDamage+=Math.max(0,dmg);
   if(e.shield>0){const ab=Math.min(e.shield,dmg);e.shield-=ab;dmg-=ab;soak=true;if(e.shield<=0)breakShield(e);else shieldHitFx(e)}
-  e.hp-=dmg;if(!o.tick){e.flash=90;if(window.V69Animations)V69Animations.trigger(e.mesh,'hit');}
+  e.hp-=dmg;if(!o.tick){e.flash=90;if(window.V69Animations)V69Animations.trigger(e.mesh,'hit');if(window.CombatV11)CombatV11.hit(e,dtype,!!o.crit);}
   damageNumber(e,shown,{crit:o.crit,tick:o.tick,soak:soak&&dmg<=0,force:e.hp<=0});
   if(!o.tick&&window.V8Visual)V8Visual.hit(e,dtype,o.crit);
   if(o.crit){sfx.crit();burst(e.x,22,e.y,0xffe27a,6,55)}
-  if(e.hp<=0){e.dead=true;if(window.V69Animations)V69Animations.trigger(e.mesh,'death');const bounty=Math.round(e.reward*Progress.goldMul());GameState.gold+=bounty;GameState.goldEarned+=bounty;GameState.kills++;Progress.onKill(e);goldPop(e.x,e.y,bounty);updateHUD();sfx.kill(e.isBoss);deathFx(e);
+  if(e.hp<=0){e.dead=true;if(window.CombatV11)CombatV11.death(e);if(window.V69Animations)V69Animations.trigger(e.mesh,'death');const bounty=Math.round(e.reward*Progress.goldMul());GameState.gold+=bounty;GameState.goldEarned+=bounty;GameState.kills++;Progress.onKill(e);goldPop(e.x,e.y,bounty);updateHUD();sfx.kill(e.isBoss);deathFx(e);
     dropBar(e);const m=e.mesh,s0=e.sc*S.u;addFx(240,p=>{m.scale.setScalar(Math.max(.01,s0*(1-p)));m.position.y=p*10},()=>{scene.remove(m);freeEnemy(e)});return}
   const ph=e.bd&&e.bd.phases[e.phaseIdx];if(ph&&e.hp<=e.maxHp*ph.at){if(window.V69Animations)V69Animations.trigger(e.mesh,'phase');startBossPhase(e,ph)}}
 function dropBar(e){scene.remove(e.bar);e.fg.material.dispose()}
@@ -580,7 +581,7 @@ function zap(t,st,first){sfx.zap();const sp=st.spec,hit=[first],pts=[new THREE.V
   lightningFx(pts,st.proj);
   hit.forEach((o,i)=>{damageEnemy(o,st.dmg*(1-.12*i),st.dtype,{crit:Math.random()<st.crit});if(!o.dead){hitSlow(t,o,st);burst(o.x,18,o.y,st.proj,5,30)}});
   if(t.fig){t.fig.rotation.y=Math.atan2(first.x-t.x,first.y-t.y);if(window.V69Animations)V69Animations.trigger(t.fig,'attack',t.interval);}ringFx(t.x,t.y,st.proj,18,240,t.top)}
-function shootAt(t,e,st){sfx.shoot(t.type);const d=st||getEffectiveStats(t),sp=d.spec,dist=Math.hypot(e.x-t.x,e.y-t.y),dur=Math.max(100,dist/(d.area?260:520)*1000),h=t.top,sn=sp&&sp.id==='sniper';
+function shootAt(t,e,st){sfx.shoot(t.type);const d=st||getEffectiveStats(t),sp=d.spec;if(window.CombatV11)CombatV11.shot(t,e,d);const dist=Math.hypot(e.x-t.x,e.y-t.y),dur=Math.max(100,dist/(d.area?260:520)*1000),h=t.top,sn=sp&&sp.id==='sniper';
   let tx=e.x,ty=e.y;if(d.area){tx+=e.vx*dur/1000;ty+=e.vy*dur/1000}
   const proj=new THREE.Mesh(d.area?geo('Sphere',5,10,10):t.type==='slow'?geo('Sphere',3.5,8,8):geo('Box',1.6,1.6,14),d.area?mat(0x3a2a1c):bmat(sn?0xfff2b0:d.proj));proj.position.set(t.x,h,t.y);if(sn)proj.scale.set(1.5,1.5,1.5);scene.add(proj);
   spark(t.x,h,t.y,d.proj,160,1.7);
@@ -634,7 +635,7 @@ function dropTouch(e){/* devuelve true si el gesto de pellizco terminó con este
   try{host.releasePointerCapture(e.pointerId)}catch(_){}return true}
 function bindInput(){
   host.style.touchAction='none';
-  const ignore=e=>e.target.closest('#msg,#howToPanel,#camControls,#abilityBar,#bossBar,#towerPanel');
+  const ignore=e=>e.target.closest('#msg,#howToPanel,#camControls,#abilityBar,#bossBar,#towerPanel,#tutCard,#tutOffer');
   const inside=e=>{const r=host.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom};
   host.addEventListener('pointerdown',e=>{if(ignore(e)||!canAct())return;
     if(e.pointerType==='mouse'&&e.button===2){clearSelection();return}
@@ -685,7 +686,7 @@ function frame(ts){requestAnimationFrame(frame);const real=ts-(S.last||ts),raw=M
     const cur=S.fx;S.fx=[];for(const f of cur){f.age+=dt;const p=Math.min(1,f.age/f.life);f.fn(p);if(p>=1){if(f.end)f.end()}else S.fx.push(f)}}
   if(S.sel)S.sel.scale.setScalar(1+.1*Math.sin(ts/150));
   for(const t of GameState.towers)if(t.gem){t.gem.rotation.y=ts/400;t.gem.position.y=t.top+16+Math.sin(ts/350)*2}
-  Ambience.update(ts);if(window.V69Animations)V69Animations.update(raw,ts);if(window.V6Visual)V6Visual.update(ts);if(window.V65Visual)V65Visual.update(ts);placeCam();GameState.enemies.forEach(e=>e.bar.quaternion.copy(cam.quaternion));renderer.render(scene,cam)}
+  Ambience.update(ts);if(window.V69Animations)V69Animations.update(raw,ts);if(window.V6Visual)V6Visual.update(ts);if(window.V65Visual)V65Visual.update(ts);if(window.V14Visual)V14Visual.update(ts);if(window.V15Visual)V15Visual.update(ts);if(window.V16Visual)V16Visual.update(ts);placeCam();GameState.enemies.forEach(e=>e.bar.quaternion.copy(cam.quaternion));renderer.render(scene,cam)}
 let booting=false,worldReady=false;
 async function initGame(){
   S.bazInitial=(host.clientWidth||800)/(host.clientHeight||500)<1?Math.PI/2:0;

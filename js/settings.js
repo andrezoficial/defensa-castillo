@@ -88,7 +88,7 @@ const Settings = (() => {
       if (b.dataset.act === 'fs') toggleFullscreen();
       if (b.dataset.act === 'delsave' && confirm('¿Borrar la partida guardada?')) { Save.clear(); render(); }
       if (b.dataset.act === 'delall' && confirm('Se borrarán coronas, mejoras, estrellas, logros y la partida guardada. ¿Seguro?')) {
-        try { [SAVE_KEY, RUN_KEY, BEST_WAVE_KEY].forEach((k) => localStorage.removeItem(k)); } catch (err) { /* modo privado */ }
+        try { [SAVE_KEY, RUN_KEY, BEST_WAVE_KEY, TUT_KEY].forEach((k) => localStorage.removeItem(k)); } catch (err) { /* modo privado */ }
         location.reload();
       }
     });

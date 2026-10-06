@@ -196,7 +196,7 @@ function refreshBestChip() {
   const best = readBestWave();
   $('bestChip').textContent = best > 0
     ? `MEJOR RACHA · OLEADA ${best}`
-    : `V6.9 · ${WIN_WAVE} OLEADAS + MODO SIN FIN`;
+    : `V8.21 · ${WIN_WAVE} OLEADAS + MODO SIN FIN`;
 }
 
 /* ---------- Flujo de partida ---------- */
@@ -213,6 +213,7 @@ function beginGame() {
   $('howToPanel').classList.remove('open');
   Progress.applyRun();
   updateHUD();
+  if (typeof Tutorial !== 'undefined') Tutorial.onBegin(); // V8.21
 }
 
 function togglePause() {
@@ -391,6 +392,7 @@ function bindUIEvents() {
   Progress.init();
   Settings.init();
   Save.init();
+  Tutorial.init();
   syncSoundButton();
   refreshBestChip();
   setInterval(updateCombatUI, 200);

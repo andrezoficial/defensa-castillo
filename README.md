@@ -317,3 +317,13 @@ V8.3: árboles del Stylized Nature MegaKit integrados con carga diferida, 5 vari
 - **Chispas al impactar** según el tipo de daño (dorado, azul, naranja), con límite por enemigo y por carga de efectos.
 - **Halo de brillo** aditivo en cada explosión (simula bloom sin postprocesado, sin descargar nada extra).
 - Las banderas ya se animaban desde V6.5, así que no se tocaron.
+
+## V8.21 — Tutorial interactivo
+- Nuevo `js/tutorial.js`: tutorial guiado de 18 pasos sobre una oleada real (construir arqueros y hechicero, panel de torre, iniciar oleada, Furia Real, mejorar, especializaciones, enemigos, jefes y guardado).
+- Marcadores sobre el mapa señalan las casillas recomendadas (las que cubren más camino) y los botones relevantes se resaltan.
+- Se ofrece una sola vez a quien juega por primera vez (no si ya hay partida guardada o racha previa). Se repite desde **CÓMO JUGAR → TUTORIAL INTERACTIVO**.
+- La tarjeta se puede minimizar; hay «Saltar paso» y «Omitir tutorial». «Reiniciar progreso» también borra el estado del tutorial.
+- Si falta oro para un paso, el tutorial lo repone con un aviso.
+
+### V8.21 — integración
+Esta edición une el **tutorial interactivo** con el **pulido visual** (HUD tipo panel de mando, dock táctico inferior, campo con más profundidad; solo CSS). Título y chip de versión actualizados.
