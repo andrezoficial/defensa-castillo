@@ -38,3 +38,6 @@ const GameState = {
 
 // ¿Se puede interactuar con el mapa ahora mismo? (no en el menú, ni en pausa, ni con un mensaje final)
 const canAct = () => GameState.started && !GameState.paused && !GameState.over;
+
+// Expuesto en window: los parches v35–v40 acceden vía window.GameState (un const global no crea propiedad de window).
+window.GameState = GameState;

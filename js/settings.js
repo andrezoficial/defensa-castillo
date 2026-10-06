@@ -14,7 +14,8 @@ const Settings = (() => {
   function applyGfx() {
     if (typeof renderer === 'undefined' || !renderer) return;
     const dpr = window.devicePixelRatio || 1;
-    S.prMax = v.quality === 'low' ? 1 : v.quality === 'high' ? Math.min(dpr, 2) : Math.min(dpr, S.lowPower ? 1.5 : 2);
+    const mobileCap = S.lowPower ? (v.quality === 'high' ? 1.5 : 1.25) : 2;
+    S.prMax = v.quality === 'low' ? 1 : Math.min(dpr, mobileCap);
     S.pr = S.prMax;
     renderer.setPixelRatio(S.pr);
     if (S.sun) S.sun.castShadow = !!v.shadows;

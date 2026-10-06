@@ -25,6 +25,7 @@ const MAPS = {
 };
 const MAP_KEY = 'defensa-castillo-map';
 const CURRENT_MAP = (() => { try { return MAPS[localStorage.getItem(MAP_KEY)] || MAPS.valle; } catch (e) { return MAPS.valle; } })();
+window.CURRENT_MAP = CURRENT_MAP; // visible para v14/v35/v36
 const PATH_POINTS = CURRENT_MAP.path;
 
 // Definiciones de torres (estadísticas de nivel 1). Agregar una entrada
@@ -93,19 +94,24 @@ const TARGET_LABELS = { first: 'PRIMERO', strong: 'MÁS FUERTE', close: 'MÁS CE
 // Composición determinista de cada oleada (permite mostrarla antes de empezar).
 // Los enemigos nuevos aparecen por oleadas: plaga (3), saboteador (4), chamán (6), espectro (8).
 function getWavePlan(w) {
-  const n = 4 + w * 2;
-  const raiders = w > 1 ? Math.round(n * 0.3) : 0;
-  const ogres = w > 2 ? Math.round(n * 0.25) : 0;
-  const brutes = w >= 4 ? Math.max(1, Math.round(n * 0.12)) : 0;
-  const saboteurs = w >= 4 ? Math.max(1, Math.round(n * 0.1)) : 0;
-  const healers = w >= 6 ? Math.max(1, Math.round(n * 0.08)) : 0;
-  const wraiths = w >= 8 ? Math.max(1, Math.round(n * 0.12)) : 0;
-  const swarm = w >= 3 ? Math.round(3 + w * 0.8) : 0;
-  const goblins = Math.max(0, n - raiders - ogres - brutes - saboteurs - healers - wraiths);
+  // V29: la presión crece por composición, no solo por vida.
+  // Cada 5 oleadas se convierte en una oleada de élite.
+  const elite = w % 5 === 0;
+  const n = 6 + w * 3 + Math.floor(w / 4);
+  const raiders = w > 1 ? Math.round(n * (elite ? 0.34 : 0.28)) : 0;
+  const ogres = w > 2 ? Math.round(n * (elite ? 0.30 : 0.22)) : 0;
+  const brutes = w >= 4 ? Math.max(1, Math.round(n * (elite ? 0.18 : 0.11))) : 0;
+  const saboteurs = w >= 4 ? Math.max(1, Math.round(n * (elite ? 0.14 : 0.08))) : 0;
+  const healers = w >= 6 ? Math.max(1, Math.round(n * (elite ? 0.12 : 0.07))) : 0;
+  const wraiths = w >= 8 ? Math.max(1, Math.round(n * (elite ? 0.16 : 0.10))) : 0;
+  const swarm = w >= 3 ? Math.round(4 + w * (elite ? 1.15 : 0.82)) : 0;
+  let goblins = Math.max(0, n - raiders - ogres - brutes - saboteurs - healers - wraiths);
+  if (elite) goblins += 2;
   return {
     total: goblins + raiders + ogres + brutes + saboteurs + healers + wraiths + swarm,
     goblins, raiders, ogres, brutes, saboteurs, healers, wraiths, swarm,
-    boss: w % BOSS_WAVE_INTERVAL === 0,
+    boss: elite,
+    elite,
   };
 }
 
@@ -154,7 +160,11 @@ const WIN_WAVE = 15;          // al superar esta oleada se gana (después se pue
 const BOSS_LEAK_DAMAGE = 5;   // vidas que cuesta que un jefe llegue al castillo (un enemigo normal cuesta 1)
 // A partir de la oleada 10 los enemigos ganan vida extra para que el modo sin fin siga siendo un reto.
 function getHpScale(wave) {
-  return (1 + Math.max(0, wave - 10) * 0.2) * CURRENT_MAP.hp;
+  // V29: +10% desde la primera oleada y aceleración después de la 10.
+  // Las oleadas élite reciben un pico adicional sin volverlas esponjas de vida.
+  const base = 1 + wave * 0.06 + Math.max(0, wave - 10) * 0.16;
+  const elite = wave % 5 === 0 ? 1.12 : 1;
+  return base * elite * CURRENT_MAP.hp;
 }
 
 // --- Almacenamiento local (mejor racha y sonido) ---

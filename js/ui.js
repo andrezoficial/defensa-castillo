@@ -300,7 +300,7 @@ function bindUIEvents() {
 
   document.querySelectorAll('#buildButtons .tower-btn').forEach((b) =>
     b.addEventListener('click', () => selectTower(b.dataset.tower)));
-  $('waveBtn').addEventListener('click', startWave);
+  $('waveBtn').addEventListener('click', () => startWave());
   $('restartBtn').addEventListener('click', () => location.reload());
   $('continueBtn').addEventListener('click', continueEndless);
   $('upgradeBtn').addEventListener('click', () => {

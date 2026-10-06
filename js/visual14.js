@@ -2,7 +2,7 @@
    Decoración ambiental ligera. No modifica gameplay, IA, daño ni economía. */
 (function(){
 'use strict';
-let scene=null,S=null,items=[],water=[],birds=[],fireflies=[],smoke=[],flags=[],sunBase=null;
+let scene=null,S=null,items=[],water=[],birds=[],fireflies=[],smoke=[],flags=[],grass=[],npcs=[],sunBase=null,fogBase=null;
 const low=()=>!!(S&&S.lowPower);
 function mat(color,opacity=1){return new THREE.MeshBasicMaterial({color,transparent:opacity<1,opacity,depthWrite:false,side:THREE.DoubleSide});}
 function makeFlag(x,z,flip){
@@ -40,14 +40,61 @@ function makeAmbientDust(){
  const n=low()?18:45,geo=new THREE.SphereGeometry(.6,5,5),m=mat(0xe8d8ae,.16);
  for(let i=0;i<n;i++){const o=new THREE.Mesh(geo,m);o.position.set(20+Math.random()*760,12+Math.random()*80,20+Math.random()*460);o.userData={p:Math.random()*6};scene.add(o);items.push(o)}
 }
+
+function makeGrass(){
+ const n=low()?28:70;
+ const bladeGeo=new THREE.ConeGeometry(.9,5.5,4); bladeGeo.translate(0,2.7,0);
+ for(let i=0;i<n;i++){
+   const x=35+Math.random()*700,z=35+Math.random()*420;
+   if(typeof distToPath==='function'&&distToPath(x,z)<48) continue;
+   if(x>690&&z<260) continue;
+   const g=new THREE.Group();
+   for(let j=0;j<2;j++){
+     const m=new THREE.Mesh(bladeGeo,mat(j?0x6f9f46:0x86b94f,.72));
+     m.position.x=(j-.5)*1.4;m.rotation.z=(j-.5)*.55;m.rotation.y=j*.9;g.add(m);
+   }
+   g.position.set(x,.05,z);g.scale.setScalar(.75+Math.random()*.7);scene.add(g);
+   grass.push({g,phase:Math.random()*6.28,amp:.035+Math.random()*.035});
+ }
+}
+function makeNPCs(){
+ const n=low()?3:6;
+ const routes=[
+   [[120,110],[220,145],[300,100]],[[430,380],[520,350],[610,400]],[[170,400],[250,430],[320,390]],
+   [[560,120],[620,150],[570,190]],[[350,90],[410,120],[460,85]],[[90,250],[150,280],[110,320]]
+ ];
+ for(let i=0;i<n;i++){
+   const root=new THREE.Group(), body=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.8,7,6),mat(i%2?0x4f6f9b:0x8b5b38));
+   const head=new THREE.Mesh(new THREE.SphereGeometry(2.5,7,6),mat(0xd7a27b));head.position.y=5.8;
+   const pack=new THREE.Mesh(new THREE.BoxGeometry(2.8,3.5,1.5),mat(0x3d3025));pack.position.set(0,3,-1.8);
+   root.add(body,head,pack);root.position.set(routes[i][0][0],0,routes[i][0][1]);scene.add(root);
+   npcs.push({g:root,route:routes[i],seg:0,t:0,speed:.00018+Math.random()*.00008,phase:Math.random()*6.28});
+ }
+}
+function updateNPCs(ts){
+ const t=ts;
+ npcs.forEach((n,i)=>{
+   const a=n.route[n.seg],b=n.route[(n.seg+1)%n.route.length];
+   n.t+=n.speed*(S.running?1:.22)*(t-(n.last||t));n.last=t;
+   if(n.t>=1){n.t=0;n.seg=(n.seg+1)%n.route.length;}
+   const q=n.t, x=a[0]+(b[0]-a[0])*q,z=a[1]+(b[1]-a[1])*q;
+   n.g.position.x=x;n.g.position.z=z;n.g.position.y=.15+Math.abs(Math.sin(t*.006+n.phase))*.35;
+   n.g.rotation.y=Math.atan2(b[0]-a[0],b[1]-a[1]);
+   n.g.scale.y=.98+.035*Math.sin(t*.012+n.phase);
+ });
+}
+
 function init(sc,state){scene=sc;S=state;if(!scene||scene.userData.v14)return;scene.userData.v14=true;
-  makeWater(); makeBirds(); makeFireflies(); makeAmbientDust();
+  makeWater(); makeBirds(); makeFireflies(); makeAmbientDust(); makeGrass(); makeNPCs();
   makeFlag(735,135,false); makeFlag(785,155,true); makeSmoke(700,135); makeSmoke(748,178);
-  sunBase=S.sun?S.sun.intensity:1;
+  sunBase=S.sun?S.sun.intensity:1; fogBase=scene.fog?{near:scene.fog.near,far:scene.fog.far}:null;
 }
 function update(ts){if(!scene||!S)return;const t=ts*.001;
+  updateNPCs(ts);
   // Ciclo solar extremadamente sutil: conserva la lectura del mapa y evita parpadeos.
   if(S.sun){S.sun.intensity=sunBase*(.96+.08*Math.sin(t*.018));S.sun.position.x=180+Math.sin(t*.018)*45;S.sun.position.z=360+Math.cos(t*.018)*35;}
+  grass.forEach(g=>{g.g.rotation.z=Math.sin(t*1.15+g.phase)*g.amp;g.g.rotation.x=Math.cos(t*.9+g.phase)*g.amp*.65;});
+  if(scene.fog&&fogBase){const pulse=.035*Math.sin(t*.08);scene.fog.near=fogBase.near*(1+pulse);scene.fog.far=fogBase.far*(1+pulse*.7);}
   water.forEach((m,i)=>{m.material.opacity=.20+.08*Math.sin(t*1.5+m.userData.phase);m.position.y=.68+.18*Math.sin(t*1.1+m.userData.phase);});
   flags.forEach((f,i)=>{f.cloth.rotation.z=Math.sin(t*2.2+f.phase)*.07;f.cloth.scale.x=1+.035*Math.sin(t*2.7+f.phase);});
   birds.forEach((b,i)=>{b.g.position.x+=b.speed*(S.running?1:.25);b.g.position.z+=Math.sin(t*1.4+b.phase)*.08;b.g.position.y+=Math.sin(t*2+b.phase)*.12;if(b.g.position.x>840)b.g.position.x=40;b.g.rotation.y=Math.sin(t*.7+b.phase)*.18;});

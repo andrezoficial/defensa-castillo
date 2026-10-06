@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Defensa del Castillo — V14</title>
+<title>Defensa del Castillo — V23 · Sensación Comercial</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%B0%3C/text%3E%3C/svg%3E">
 <meta name="theme-color" content="#071016">
 <link rel="manifest" href="manifest.webmanifest">
@@ -38,7 +38,7 @@
       <div id="loadStatus" class="load-status" role="status" aria-live="polite"></div>
       <button id="retryLoadBtn" class="secondary-action" hidden>REINTENTAR</button>
       <div class="rotate-hint">📱 Puedes jugar en vertical u horizontal</div>
-      <div class="version-chip" id="bestChip">V16 · MUNDO DINÁMICO</div>
+      <div class="version-chip" id="bestChip">V23 · EXPERIENCIA COMERCIAL</div>
     </div>
     <div id="realmPanel" class="howto-panel realm-panel">
       <button id="closeRealm" class="close-modal">×</button>
@@ -78,6 +78,7 @@
     </div>
     <div id="waveProgress" class="wave-progress"><div class="wave-progress-top"><span>PROGRESO</span><b id="waveProgressText">0 / 5</b></div><div class="progress-track"><i id="waveProgressBar"></i></div></div>
     <div id="bossTag"><span>♛</span> JEFE EN CAMINO</div>
+    <div id="v23Mission"><span class="v23-mission-icon">◆</span><div><small>OBJETIVO</small><b id="v23MissionText">Prepara tus defensas</b></div><strong id="v23MissionProgress">0%</strong></div>
     <div id="speedControls">
       <button id="pauseBtn" class="iconBtn" title="Pausa">Ⅱ</button>
       <button id="speedBtn" class="iconBtn" title="Velocidad x2 (F)">»</button>
@@ -93,6 +94,9 @@
     <div id="saveChip">💾 PARTIDA GUARDADA</div>
     <div id="combatStatus" class="combat-status"><span class="status-dot"></span><span id="combatStatusText">DEFENSAS EN ESPERA</span></div>
     <div class="enemy-counter">ENEMIGOS <b id="enemyCount">0</b></div>
+    <div id="v23Threats" aria-live="polite"><span>⚠</span><b>AMENAZAS</b><i id="v23ThreatCount">0</i></div>
+    <div id="v23ToastStack"></div>
+    <div id="v23Transition" aria-hidden="true"><div class="v23-transition-mark">⚔</div><b id="v23TransitionTitle">LAS TIERRAS DEL ECLIPSE</b><small id="v23TransitionSub">La defensa continúa</small></div>
     <div id="pauseOverlay"><div><span>Ⅱ</span><strong>PAUSA</strong><button id="resumeBtn" type="button">▶ CONTINUAR</button><small>El reino espera tu regreso · toca la pantalla, ▶ o la tecla P</small></div></div>
     <div id="camControls" aria-label="Cámara">
       <button id="rotL" class="iconBtn" title="Girar cámara a la izquierda (Q)" aria-label="Girar a la izquierda">⟲</button>
@@ -100,7 +104,7 @@
       <button id="zoomIn" class="iconBtn" title="Acercar" aria-label="Acercar">+</button>
       <button id="zoomOut" class="iconBtn" title="Alejar" aria-label="Alejar">−</button>
     </div>
-    <div id="msg"><div class="result-card"><div id="msgCrest">♛</div><div id="msgTitle"></div><p id="msgSubtitle"></p><div id="resultStats" class="result-stats"></div><div class="result-actions"><button id="continueBtn" hidden>SEGUIR EN MODO SIN FIN</button><button id="restartBtn">JUGAR DE NUEVO</button></div></div></div>
+    <div id="msg"><div class="result-card v23-result-card"><div class="v23-result-ribbon" id="v23ResultRibbon">REINO SALVADO</div><div id="msgCrest">♛</div><div id="msgTitle"></div><p id="msgSubtitle"></p><div id="resultStats" class="result-stats"></div><div id="v23RewardSummary"></div><div class="result-actions"><button id="continueBtn" hidden>SEGUIR EN MODO SIN FIN</button><button id="restartBtn">JUGAR DE NUEVO</button></div></div></div>
   </main>
 
   <footer id="bottombar">
@@ -149,8 +153,26 @@
 <script src="js/visual14.js"></script>
 <script src="js/visual15.js"></script>
 <script src="js/visual16.js"></script>
+<script src="js/visual17.js"></script>
+<script src="js/v23.js"></script>
+<script src="js/visual18.js"></script>
+<script src="js/visual25.js"></script>
+<script src="js/v26.js"></script>
+<script src="js/v27.js"></script>
+<script src="js/v28.js"></script>
+  <script src="js/v29.js"></script>
+<script src="js/v30.js"></script>
+<script src="js/v31.js"></script>
 <script src="js/save.js"></script>
 <script src="js/tutorial.js"></script>
+<script src="js/v33.js"></script>
+<script src="js/v34.js"></script>
+<script src="js/v35.js"></script>
+<script src="js/v36.js"></script>
+<script src="js/v37.js"></script>
+<script src="js/v38.js"></script>
+<script src="js/v39.js"></script>
+<script src="js/v40.js"></script>
 <script src="js/main.js"></script>
 <script>if("serviceWorker" in navigator && location.protocol !== "file:"){navigator.serviceWorker.register("sw.js").catch(()=>{});}</script>
 </body>

@@ -11,7 +11,7 @@ const Tutorial = (() => {
   const kb = (k) => (coarse() ? '' : ` <kbd>${k}</kbd>`);
 
   let active = false, idx = -1, pending = false, minimized = false;
-  let card = null, offer = null, markEls = [], hlEl = null, raf = 0, timer = 0;
+  let card = null, offer = null, spotlight = null, markEls = [], hlEl = null, raf = 0, timer = 0;
   const plan = {};
 
   /* ---------- Utilidades de mapa ---------- */
@@ -99,7 +99,7 @@ const Tutorial = (() => {
       done: () => GameState.wave >= 1,
       text: `Pulsa <b>INICIAR OLEADA 1</b>${kb('Espacio')}. El botón te avisa de lo que viene: cantidad de enemigos, veloces, blindados, especiales y <b>♛ jefe</b>.` },
     { title: 'Usa una habilidad', target: '#abilityBar',
-      done: () => GameState.furyUntil > 0 || waveEnded(),
+      done: () => GameState.furyUntil > 0 || waveEnded() || (GameState.waveActive && GameState.enemies && GameState.enemies.length > 0),
       text: `Tienes 3 poderes con enfriamiento: <b>☄ Meteoro</b>${kb('Z')}, <b>❄ Escarcha</b>${kb('X')} y <b>⚡ Furia Real</b>${kb('C')}. Prueba ahora <b>⚡ Furia Real</b>: todas tus torres disparan un 70 % más rápido durante 7 s.` },
     { title: 'Controla el ritmo', next: true, target: '#speedControls', done: waveEnded,
       text: `<b>»</b> acelera el juego ×2${kb('F')} y <b>Ⅱ</b> pausa${kb('P')}. Con <b>⟲ ⟳ + −</b> giras y acercas la cámara${kb('Q / E')}${coarse() ? '; también puedes pellizcar para hacer zoom' : ' (y la rueda del ratón)'}.` },
@@ -133,11 +133,15 @@ const Tutorial = (() => {
     card.setAttribute('role', 'dialog');
     card.setAttribute('aria-live', 'polite');
     card.innerHTML =
-      '<div class="tut-top"><span class="tut-step"></span><button type="button" class="tut-min" aria-label="Minimizar">–</button></div>' +
+      '<div class="tut-top"><span class="tut-step"></span><span class="tut-progress"><i></i></span><button type="button" class="tut-min" aria-label="Minimizar">–</button></div>' +
       '<h3 class="tut-title"></h3><p class="tut-text"></p>' +
       '<div class="tut-actions"><button type="button" class="tut-quit">Omitir tutorial</button><span class="tut-spacer"></span>' +
       '<button type="button" class="tut-skipstep">Saltar paso ›</button><button type="button" class="tut-next">Siguiente ▸</button></div>';
     host.appendChild(card);
+    spotlight = document.createElement('div');
+    spotlight.id = 'tutSpotlight';
+    spotlight.setAttribute('aria-hidden', 'true');
+    host.appendChild(spotlight);
     card.querySelector('.tut-min').addEventListener('click', () => { minimized = !minimized; render(); });
     card.querySelector('.tut-quit').addEventListener('click', () => stop('skipped'));
     card.querySelector('.tut-skipstep').addEventListener('click', () => go(idx + 1));
@@ -147,6 +151,7 @@ const Tutorial = (() => {
 
   function clearHighlights() {
     if (hlEl) { hlEl.classList.remove('tut-hl'); hlEl = null; }
+    if (spotlight) spotlight.style.display = 'none';
     markEls.forEach((m) => m.remove());
     markEls = [];
   }
@@ -157,6 +162,9 @@ const Tutorial = (() => {
     if (!active || !st || GameState.over) { card.style.display = 'none'; clearHighlights(); return; }
     card.style.display = 'block';
     card.classList.toggle('min', minimized);
+    const progress = Math.round(((idx + 1) / STEPS.length) * 100);
+    const prog = card.querySelector('.tut-progress i');
+    if (prog) prog.style.width = progress + '%';
     card.querySelector('.tut-min').textContent = minimized ? '+' : '–';
     card.querySelector('.tut-step').textContent = `TUTORIAL · ${idx + 1} / ${STEPS.length}`;
     card.querySelector('.tut-title').textContent = st.title;
@@ -179,6 +187,20 @@ const Tutorial = (() => {
       hlEl = visible;
       if (hlEl) hlEl.classList.add('tut-hl');
     }
+    if (!spotlight) return;
+    if (!active || !visible || minimized) { spotlight.style.display = 'none'; return; }
+    const hr = host.getBoundingClientRect();
+    const r = visible.getBoundingClientRect();
+    const pad = coarse() ? 8 : 6;
+    const x = Math.max(4, r.left - hr.left - pad);
+    const y = Math.max(4, r.top - hr.top - pad);
+    const w = Math.min(host.clientWidth - x - 4, r.width + pad * 2);
+    const h = Math.min(host.clientHeight - y - 4, r.height + pad * 2);
+    spotlight.style.display = 'block';
+    spotlight.style.left = x + 'px';
+    spotlight.style.top = y + 'px';
+    spotlight.style.width = Math.max(20, w) + 'px';
+    spotlight.style.height = Math.max(20, h) + 'px';
   }
 
   function syncMarkers() {
@@ -249,6 +271,7 @@ const Tutorial = (() => {
     cancelAnimationFrame(raf);
     clearHighlights();
     if (card) card.style.display = 'none';
+    if (spotlight) spotlight.style.display = 'none';
     if (idx >= 0 && STEPS[idx] && STEPS[idx].leave) STEPS[idx].leave();
     idx = -1;
   }

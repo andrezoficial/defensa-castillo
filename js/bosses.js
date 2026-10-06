@@ -5,7 +5,7 @@
 function startBossPhase(e, ph) {
   e.phaseIdx++;
   e.phaseLock = S.now + 1300;
-  S.shake = 8;
+  S.shake = 8;if(window.CombatV25)CombatV25.hit(e,'fire',true);
   S.slow = 350;
   sfx.phase();
   ringFx(e.x, e.y, 0xff5544, 100, 700);
