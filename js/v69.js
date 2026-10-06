@@ -7,7 +7,7 @@
   const mixers=new Set(), controllers=new Set();
   // Estados que usan clips reales del GLB (el resto usa el movimiento procedural de reserva).
   // archer y wizard: idle en bucle + attack de una sola pasada que vuelve a idle (ver play/update).
-  const REAL={zombie:['idle','walk'],wyvern:['idle','walk'],wyvernboss:['idle','walk'],solani:['idle'],orc:['walk'],orcrun:['walk'],darkknight:['idle','walk'],archer:['idle','attack'],wizard:['idle','attack']};
+  const REAL={zombie:['idle','walk'],wyvern:['idle','walk'],wyvernboss:['idle','walk'],solani:['idle'],orc:['walk'],orcrun:['walk'],darkknight:['idle','walk'],archer:['attack'],wizard:[]};
   // velocidad del clip por modelo: el orco camina a 38 u/s, así que su ciclo se frena para que los pies no patinen
   const SPEED={orc:.45,orcrun:.74,darkknight:.27}; // darkknight: clip 'walk' reasignado del orco; 27 u/s con escala 108 // orcrun = mismo orc.glb con el clip 'run' (Balista Veloz, 90 u/s)
   const realOf=k=>REAL[k]||['idle','walk','attack','hit','death','phase'];

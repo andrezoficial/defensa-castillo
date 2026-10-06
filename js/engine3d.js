@@ -424,23 +424,31 @@ function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),src=MODEL
   g.add(m);g.userData.mats=mats;if(k==='enemy_soldier'&&src.animations&&src.animations.length){const mixer=new THREE.AnimationMixer(m);g.userData.animMixer=mixer;const clip=src.animations.find(a=>/walk|run/i.test(a.name))||src.animations[0];const action=mixer.clipAction(clip);action.reset();action.play();g.userData.animAction=action;}if(window.V69Animations&&k!=='enemy_soldier')window.V69Animations.attach(g,k);return g}
 /* ---------- V45: presentación visual móvil de héroes y enemigos ---------- */
 function v45GradeMaterials(root, role){
-  // V46: conservar colores/texturas originales; solo mejorar respuesta de materiales.
+  const palettes={
+    hero:{dark:0x1b2430,metal:0xb8c4ce,accent:0x3b82f6},
+    archer:{dark:0x193b35,metal:0xc8a75a,accent:0x2d8b73},
+    wizard:{dark:0x25204f,metal:0xc6a64b,accent:0x62d9ff},
+    goblin:{dark:0x2b3a25,metal:0x8d6b3d,accent:0x76b83f},
+    ogre:{dark:0x24231f,metal:0x5f6670,accent:0xb13b3b},
+    brute:{dark:0x20231d,metal:0x6d7680,accent:0xb73737},
+    raider:{dark:0x242a35,metal:0x9b7a45,accent:0xc84a3a},
+    swarm:{dark:0x29331f,metal:0x9b7a32,accent:0xe0b341},
+    saboteur:{dark:0x202238,metal:0x68708a,accent:0x8a73d6},
+    healer:{dark:0x173c34,metal:0xb7d7c9,accent:0x55d98a},
+    wraith:{dark:0x18253a,metal:0x9dc9ff,accent:0x8fd3ff}
+  }[role]||{dark:0x252a30,metal:0x9aa5ae,accent:0x8fa6b8};
   root.traverse(o=>{
     if(!o.isMesh||!o.material)return;
     const mats=Array.isArray(o.material)?o.material:[o.material];
     mats.forEach(m=>{
-      if(!m)return;
-      if('flatShading' in m) m.flatShading=false;
-      m.roughness=Math.min(0.92,Math.max(0.42, m.roughness==null?.68:m.roughness));
-      if('metalness' in m) m.metalness=Math.min(0.55,Math.max(0,m.metalness||0));
-      if('envMapIntensity' in m) m.envMapIntensity=.9;
-      if(m.color && role){
-        const l=(m.color.r+m.color.g+m.color.b)/3;
-        if(l<.12) m.color.offsetHSL(0,0,.035);
-      }
+      if(!m.color)return;
+      const c=m.color.clone(), l=(c.r+c.g+c.b)/3;
+      if(l<.20)m.color.lerp(new THREE.Color(palettes.dark),.35);
+      else if(l>.78)m.color.lerp(new THREE.Color(palettes.metal),.18);
+      m.roughness=.82;
+      m.metalness=Math.min(.35,m.metalness||0);
       m.needsUpdate=true;
     });
-    if(o.geometry && o.geometry.attributes && o.geometry.attributes.normal) o.geometry.computeVertexNormals();
   });
 }
 function v45Badge(g, role, h, color){
@@ -557,7 +565,7 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
   const sh=flat(new THREE.Mesh(geo('Circle',1,24),tmat(0x000000,.28)));sh.position.y=1.4;sh.scale.setScalar(type==='area'?27:16);g.add(sh);
   if(type==='basic'){
     // Archer: mayor contraste con el terreno + base de identidad visual.
-    fig=inst('archer',34,0,true);
+    fig=inst('archer',22,0,false);
     const navy=new THREE.Color(0x244b63);
     const leather=new THREE.Color(0x6b4328);
     const silver=new THREE.Color(0xd9d0bd);
@@ -570,7 +578,6 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
       else if(luma>.72) mm.color.lerp(silver,.20);
       else mm.color.lerp(leather,.16);
     });
-    // V46: no añadir geometría low-poly al arquero.
     const base=flat(new THREE.Mesh(geo('Cylinder',13.5,16,4),new THREE.MeshLambertMaterial({color:0x24104a})));
     base.position.y=2.4;
     base.castShadow=false;base.receiveShadow=true;
@@ -585,12 +592,12 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
     g.add(base,core,rim,badge,fig);
     top=58;
   }
-  else if(type==='slow'){fig=inst('wizard',34,true); g.add(fig); top=62}
+  else if(type==='slow'){fig=inst('wizard',74,0,false); g.add(fig); top=78}
   else{g.add(inst('catapult',50));top=40}
   return{g,top,fig}}
 const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
 // modelo, tamaño, color de tinte, intensidad del tinte, opacidad
-const MODEL_CFG={goblin:['enemy_soldier',34,0x5d8f4c,.18],brute:['orc',40],raider:['darkknight',32,0xd4af37,.16],ogre:['orc',46,0x5d7b3d,.14],swarm:['enemy_soldier',25,0xe0b341,.20],saboteur:['darkknight',35,0x4a4a66,.22],healer:['wizard',20,0x55d98a,.22],wraith:['enemy_soldier',48,0x8fd3ff,.42,.58]};
+const MODEL_CFG={goblin:['goblin',38],brute:['orc',40],raider:['raider',34,0xd4af37,.28],ogre:['ogre',44],swarm:['goblin',25,0xe0b341,.25],saboteur:['raider',42,0x4a4a66,.38],healer:['wizard',40,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55]};
 function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,icon,sc=1;
   if(key==='boss'){
     const mk=bd.model&&MODELS[bd.model[0]]?bd.model[0]:'solani';
@@ -602,7 +609,7 @@ function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,
   if(c[2]!=null){const tc=new THREE.Color(c[2]);mats.forEach(mm=>mm.color.lerp(tc,c[3]))}
   if(c[4]!=null)mats.forEach(mm=>{mm.transparent=true;mm.opacity=c[4];mm.depthWrite=false});
   g.add(m);
-  // V46: sin accesorios geométricos low-poly; el modelo original lleva la identidad visual.
+  enemyWardrobe(key,m);
   g.userData.v69=m.userData.v69; // el motor llama a V69Animations.trigger/state con e.mesh (grupo externo)
   if(m.userData.animMixer){g.userData.animMixer=m.userData.animMixer;g.userData.animAction=m.userData.animAction} // V8.16: el soldado anima con su propio mezclador; el bucle de enemigos lo lee de e.mesh (grupo externo), no del interno
   if(key==='boss'){aura=flat(new THREE.Mesh(geo('Ring',30,37,32),tmat(0xe7bd5b,.2)));aura.scale.setScalar(sc);aura.position.y=1.5;g.add(aura)}
