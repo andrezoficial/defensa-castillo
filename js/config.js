@@ -46,6 +46,9 @@ const ENEMY_TYPES = {
   saboteur: { name: 'Saboteador', color: 0x6a6a96 },
   healer: { name: 'Chamán', color: 0x55d98a },
   wraith: { name: 'Espectro', color: 0x8fd3ff },
+  plague_assassin: { name: 'Asesino de la Plaga', color: 0x8b6b9e },
+  oneeyed_ogre: { name: 'Ogro Cíclope', color: 0x7f9f62 },
+  elder_ogre: { name: 'Ogro Anciano', color: 0x6d7f6a },
   boss: { name: 'Jefe', color: 0x8b0000 },
 };
 
@@ -56,6 +59,9 @@ const ENEMY_TIPS = {
   saboteur: 'desactiva las torres cercanas: elimínalo primero',
   healer: 'cura a los aliados a su alrededor: ¡prioridad!',
   wraith: 'resiste flechas y asedio: usa magia',
+  plague_assassin: 'muy rápido y peligroso: elimínalo antes de que llegue a las torres',
+  oneeyed_ogre: 'tanque pesado: resiste mucho daño físico',
+  elder_ogre: 'élite resistente: combina magia y asedio para derribarlo',
 };
 
 // Estadísticas base de cada enemigo (la vida crece con la oleada w).
@@ -68,6 +74,9 @@ const ENEMY_STATS = {
   saboteur: { hp: (w) => 40 + w * 9,  speed: 58, r: 11, reward: 9 },
   healer:   { hp: (w) => 55 + w * 10, speed: 40, r: 12, reward: 14 },
   wraith:   { hp: (w) => 60 + w * 11, speed: 55, r: 12, reward: 14 },
+  plague_assassin: { hp: (w) => 78 + w * 12, speed: 70, r: 11, reward: 18 },
+  oneeyed_ogre:    { hp: (w) => 170 + w * 20, speed: 32, r: 20, reward: 22 },
+  elder_ogre:     { hp: (w) => 245 + w * 28, speed: 28, r: 22, reward: 30 },
 };
 
 // Resistencias: fracción del daño que absorbe cada enemigo según el tipo de daño de la torre
@@ -78,6 +87,9 @@ const RESIST = {
   brute: { pierce: 0.25 },
   boss: { pierce: 0.2 },
   wraith: { pierce: 0.5, siege: 0.5, magic: -0.3 },
+  plague_assassin: { pierce: 0.12 },
+  oneeyed_ogre: { pierce: 0.42 },
+  elder_ogre: { pierce: 0.50, siege: 0.12 },
 };
 
 // --- Enemigos especiales ---
@@ -104,12 +116,16 @@ function getWavePlan(w) {
   const saboteurs = w >= 4 ? Math.max(1, Math.round(n * (elite ? 0.14 : 0.08))) : 0;
   const healers = w >= 6 ? Math.max(1, Math.round(n * (elite ? 0.12 : 0.07))) : 0;
   const wraiths = w >= 8 ? Math.max(1, Math.round(n * (elite ? 0.16 : 0.10))) : 0;
+  const plagueAssassins = w >= 9 ? Math.max(1, Math.round(n * (elite ? 0.10 : 0.055))) : 0;
+  const oneEyedOgres = w >= 7 ? Math.max(1, Math.round(n * (elite ? 0.10 : 0.06))) : 0;
+  const elderOgres = w >= 11 ? Math.max(1, Math.round(n * (elite ? 0.075 : 0.035))) : 0;
   const swarm = w >= 3 ? Math.round(4 + w * (elite ? 1.15 : 0.82)) : 0;
-  let goblins = Math.max(0, n - raiders - ogres - brutes - saboteurs - healers - wraiths);
+  let goblins = Math.max(0, n - raiders - ogres - brutes - saboteurs - healers - wraiths - plagueAssassins - oneEyedOgres - elderOgres);
   if (elite) goblins += 2;
   return {
-    total: goblins + raiders + ogres + brutes + saboteurs + healers + wraiths + swarm,
-    goblins, raiders, ogres, brutes, saboteurs, healers, wraiths, swarm,
+    total: goblins + raiders + ogres + brutes + saboteurs + healers + wraiths + plagueAssassins + oneEyedOgres + elderOgres + swarm,
+    goblins, raiders, ogres, brutes, saboteurs, healers, wraiths,
+    plagueAssassins, oneEyedOgres, elderOgres, swarm,
     boss: elite,
     elite,
   };
@@ -235,7 +251,7 @@ const specOf = (t) => (t.spec ? SPEC_DEFS[t.type].find((s) => s.id === t.spec) :
 //   enrage (más veloz), shield (escudo que absorbe daño), stomp (pisotón periódico que aturde torres).
 const BOSS_DEFS = [
   // Jefe dragón (wyvern animado). model = [clave del modelo, escala]; fly = vuela a media altura; hb = altura de la barra de vida.
-  { name: 'Wyvern Ancestral', model: ['wyvernboss', 13], fly: true, hb: 66, tint: null, hpMul: 1.4, speed: 30, size: 90,
+  { name: 'Dragón Ancestral', model: ['dragon', 0.62], fly: true, hb: 102, tint: null, hpMul: 1.55, speed: 31, size: 100,
     phases: [
       { at: 0.7, title: 'CRÍAS', do: ['summon'] },
       { at: 0.4, title: 'FURIA DRACÓNICA', do: ['enrage', 'stomp'] },

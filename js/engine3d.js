@@ -170,6 +170,9 @@ function buildWorld(){
   S.hemi=new THREE.HemisphereLight(0xd9edff,0x344526,.92);scene.add(S.hemi);
   const sun=S.sun=new THREE.DirectionalLight(0xffe8bc,1.05);sun.position.set(180,420,360);sun.target.position.set(410,0,250);sun.castShadow=true;sun.shadow.mapSize.set(S.lowPower?1024:2048,S.lowPower?1024:2048);
   sun.shadow.bias=-0.0007;sun.shadow.normalBias=.55;Object.assign(sun.shadow.camera,{left:-500,right:500,top:340,bottom:-340,near:10,far:1350});scene.add(sun,sun.target);
+  // V49: luz de relleno para que personajes y enemigos no queden negros en móvil.
+  const fill=new THREE.DirectionalLight(0xcfe6ff,.55);fill.position.set(-260,220,-180);fill.target.position.set(400,0,250);scene.add(fill,fill.target);
+  const charFill=new THREE.HemisphereLight(0xffffff,0x566070,.38);scene.add(charFill);
 
   const g=new THREE.Mesh(geo('Plane',800,500),texturedMat(CURRENT_MAP.ground,17,'ground'));g.rotation.x=-Math.PI/2;g.position.set(400,0,250);g.receiveShadow=true;scene.add(g);
   const far=flat(new THREE.Mesh(geo('Plane',3200,2600),new THREE.MeshLambertMaterial({color:CURRENT_MAP.far,depthWrite:false})));far.renderOrder=-1;far.position.set(400,-.7,250);scene.add(far);
@@ -243,6 +246,13 @@ function buildCastle(){const c=inst('castle',150,-Math.PI/2);c.position.set(775,
 
 /* ---------- Modelos ---------- */
 const MODELS={};window.MODELS=MODELS; // v69.js lee los clips desde window.MODELS (un const global no cuelga de window)
+const MODEL_FILES={
+  plague_assassin:'plague_assassin.glb',
+  oneeyed_ogre:'oneeyed_ogre.glb',
+  elder_ogre:'elder_ogre.glb',
+  dragon:'dragon.glb'
+};
+let MODEL_LOADER=null;
 
 const MAPKIT_MODELS={}; let MAPKIT_READY=Promise.resolve();
 /* Decoración 3D del mapa: carga diferida y limitada para no penalizar el arranque. */
@@ -386,16 +396,34 @@ function stripRootMotion(root,clips){if(!clips)return;clips.forEach(cl=>cl.track
   if(!/hips.*\.position$/i.test(t.name)||t.values.length<6)return;const v=t.values,y0=v[1];for(let i=1;i<v.length;i+=3)v[i]=y0}))}
 function loadModelKey(k,L){return new Promise((ok,no)=>{
   if(MODELS[k]) return ok();
-  const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{if(k==='orc')liftVertexColors(g.scene,.4);else if(k==='darkknight')liftVertexColors(g.scene,.55);else if(k==='enemy_soldier'){liftTextures(g.scene,.6);stripRootMotion(g.scene,g.animations)}else if(k==='solani')liftTextures(g.scene,.8);MODELS[k]=g;if(k==='wyvern')MODELS.wyvernboss=g;if(k==='orc')MODELS.orcrun=g;ok()},fail=e=>no(e);
-  if(d){const b=atob(d),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);L.parse(a.buffer,'',done,fail)}else L.load('assets/models/'+k+'.glb',done,undefined,fail);
+  const d=window.MODEL_DATA&&MODEL_DATA[k],done=g=>{
+    if(k==='orc')liftVertexColors(g.scene,.4);
+    else if(k==='darkknight')liftVertexColors(g.scene,.55);
+    else if(k==='enemy_soldier'){liftTextures(g.scene,.6);stripRootMotion(g.scene,g.animations)}
+    else if(k==='solani')liftTextures(g.scene,.8);
+    else if(k==='elder_ogre'||k==='dragon')stripRootMotion(g.scene,g.animations);
+    MODELS[k]=g;
+    if(k==='wyvern')MODELS.wyvernboss=g;
+    if(k==='orc')MODELS.orcrun=g;
+    ok()
+  },fail=e=>no(e);
+  if(d){const b=atob(d),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);L.parse(a.buffer,'',done,fail)}
+  else L.load('assets/models/'+(MODEL_FILES[k]||k+'.glb'),done,undefined,fail);
 })}
+function ensureModelKey(k){
+  if(MODELS[k]) return Promise.resolve(MODELS[k]);
+  MODEL_LOADER=MODEL_LOADER||new THREE.GLTFLoader();
+  return loadModelKey(k,MODEL_LOADER);
+}
+window.ensureModelKey=ensureModelKey;
 function loadModels(onProgress){
-  // Carga inicial ligera: no se descargan los jefes de 8-12 MB hasta que hacen falta.
-  const core=['archer','wizard','catapult','goblin','raider','ogre','castle','enemy_soldier','orc'],boss=['wyvern','solani','darkknight'];
-  const L=new THREE.GLTFLoader();let n=0;const tick=()=>{n++;if(onProgress)onProgress(n/core.length)};
+  // Carga inicial ligera: los enemigos nuevos y los jefes pesados se descargan solo cuando van a aparecer.
+  const core=['archer','wizard','catapult','goblin','raider','ogre','castle','enemy_soldier','orc'];
+  const L=new THREE.GLTFLoader(); MODEL_LOADER=L;
+  let n=0;const tick=()=>{n++;if(onProgress)onProgress(n/core.length)};
   return Promise.all(core.map(k=>loadModelKey(k,L).then(tick))).then(()=>{
-    // Preparación en segundo plano; el jugador puede empezar sin esperar los assets pesados.
-    BOSS_MODELS_READY=Promise.all(boss.map(k=>loadModelKey(k,L))).catch(()=>{});
+    // V47: no descargar modelos pesados al iniciar la partida. Se solicitan bajo demanda.
+    BOSS_MODELS_READY=Promise.resolve();
     window.BOSS_MODELS_READY=BOSS_MODELS_READY;
   });
 }
@@ -420,8 +448,31 @@ function inst(k,size,ry=0,own=false,zv=null){const g=new THREE.Group(),src=MODEL
   let fx=MODEL_FIX[k];
   if(k==='zombie'){const vi=zv!=null?zv:Math.floor(Math.random()*10),v=pickZombie(m,vi);fx=[-v[1],0,-v[2]];g.userData.zv=vi}
   if(fx){const c=Math.cos(ry),s=Math.sin(ry);m.position.set((fx[0]*c+fx[2]*s)*size,fx[1]*size,(-fx[0]*s+fx[2]*c)*size)}m.traverse(o=>{if(o.isMesh){o.castShadow=true;if(own&&o.material){o.material=o.material.clone();mats.push(o.material)}}});
-  if(own && ['archer','wizard','goblin','ogre','orc','orcrun','raider','enemy_soldier'].includes(k)) v45GradeMaterials(m,k==='archer'?'archer':k==='wizard'?'wizard':k);
+  if(own && ['archer','wizard','goblin','ogre','orc','orcrun','raider','enemy_soldier'].includes(k)) v49CharacterMaterials(m,k);
   g.add(m);g.userData.mats=mats;if(k==='enemy_soldier'&&src.animations&&src.animations.length){const mixer=new THREE.AnimationMixer(m);g.userData.animMixer=mixer;const clip=src.animations.find(a=>/walk|run/i.test(a.name))||src.animations[0];const action=mixer.clipAction(clip);action.reset();action.play();g.userData.animAction=action;}if(window.V69Animations&&k!=='enemy_soldier')window.V69Animations.attach(g,k);return g}
+/* ---------- V49: materiales de personajes visibles en móvil ---------- */
+function v49CharacterMaterials(root, role){
+  root.traverse(o=>{
+    if(!o.isMesh || !o.material) return;
+    const original=Array.isArray(o.material)?o.material:o.material;
+    const list=Array.isArray(original)?original:[original];
+    const out=list.map(m=>{
+      const mm=m.clone();
+      if('roughness' in mm) mm.roughness=Math.min(0.9,Math.max(0.42,mm.roughness??0.72));
+      if('metalness' in mm) mm.metalness=Math.min(0.5,Math.max(0,mm.metalness??0));
+      if('emissive' in mm){
+        const base=mm.color?mm.color.clone():new THREE.Color(0xffffff);
+        const lum=(base.r+base.g+base.b)/3;
+        mm.emissive.copy(base).multiplyScalar(lum<0.12?0.14:0.045);
+        mm.emissiveIntensity=1;
+      }
+      mm.needsUpdate=true;
+      return mm;
+    });
+    o.material=Array.isArray(original)?out:out[0];
+  });
+}
+
 /* ---------- V45: presentación visual móvil de héroes y enemigos ---------- */
 function v45GradeMaterials(root, role){
   const palettes={
@@ -595,9 +646,21 @@ function towerModel(type){const g=new THREE.Group();let top,fig;
   else if(type==='slow'){fig=inst('wizard',74,0,false); g.add(fig); top=78}
   else{g.add(inst('catapult',50));top=40}
   return{g,top,fig}}
-const EN={goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},boss:{hb:96,s:1}};
-// modelo, tamaño, color de tinte, intensidad del tinte, opacidad
-const MODEL_CFG={goblin:['goblin',38],brute:['orc',40],raider:['raider',34,0xd4af37,.28],ogre:['ogre',44],swarm:['goblin',25,0xe0b341,.25],saboteur:['raider',42,0x4a4a66,.38],healer:['wizard',40,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55]};
+const EN={
+  goblin:{hb:34,s:1},raider:{hb:34,s:1},ogre:{hb:58,s:1},brute:{hb:62,s:1},
+  swarm:{hb:26,s:1},saboteur:{hb:36,s:1},healer:{hb:46,s:1},wraith:{hb:50,s:1},
+  plague_assassin:{hb:44,s:1},oneeyed_ogre:{hb:70,s:1},elder_ogre:{hb:78,s:1},
+  boss:{hb:96,s:1}
+};
+// Los nuevos modelos conservan sus texturas; no se les aplican accesorios low-poly.
+const MODEL_CFG={
+  goblin:['goblin',38],brute:['orc',40],raider:['raider',34,0xd4af37,.28],ogre:['ogre',44],
+  swarm:['goblin',25,0xe0b341,.25],saboteur:['raider',42,0x4a4a66,.38],
+  healer:['wizard',40,0x55d98a,.5],wraith:['enemy_soldier',48,0x8fd3ff,.7,.55],
+  plague_assassin:['plague_assassin',25],
+  oneeyed_ogre:['oneeyed_ogre',35],
+  elder_ogre:['elder_ogre',11]
+};
 function enemyModel(key,bd){const g=new THREE.Group();let c=MODEL_CFG[key],aura,icon,sc=1;
   if(key==='boss'){
     const mk=bd.model&&MODELS[bd.model[0]]?bd.model[0]:'solani';
@@ -658,7 +721,7 @@ function updateEnemies(time,dt){for(const e of GameState.enemies){if(e.dead)cont
   if(e.burnUntil>time){e.burnT-=dt;if(e.burnT<=0){e.burnT=500;damageEnemy(e,e.burnDps*.5,'burn',{tick:true});if(e.dead)continue}}
   if(window.CombatV26)CombatV26.update(e,time,dt);
   if(window.CombatV28)CombatV28.update(e,time,dt);
-  if(e.key==='healer')healerTick(e,dt);else if(e.key==='saboteur')saboteurTick(e,dt);
+  if(e.key==='healer')healerTick(e,dt);else if(e.key==='saboteur'||e.key==='plague_assassin')saboteurTick(e,dt);
   if(e.stomping){e.stompT-=dt;if(e.stompT<=0){e.stompT=5200;bossStomp(e)}}
   const still=e.freezeUntil>time||e.phaseLock>time,aiMul=e.aiSpeedMul||1,cur=still?0:e.slowUntil>time?e.baseSpeed*(e.slowF||SLOW_FACTOR)*aiMul:e.baseSpeed*aiMul,spd=cur*dt/1000,wp=PATH_POINTS[e.wpIndex+1];
   if(!wp){GameState.lives=Math.max(0,GameState.lives-(e.isBoss?BOSS_LEAK_DAMAGE:1));updateHUD();S.shake=5;sfx.leak();Progress.onLeak();Settings.buzz(45);killEnemyOffPath(e);if(GameState.lives<=0)showGameOver(false);continue}
@@ -675,16 +738,25 @@ function updateEnemies(time,dt){for(const e of GameState.enemies){if(e.dead)cont
   GameState.enemies=GameState.enemies.filter(e=>!e.dead)}
 function startWave(){if(GameState.waveActive||GameState.winPending||!canAct())return;const W=++GameState.wave;if(window.EconomyV27)EconomyV27.consume();if(window.CombatV28)CombatV28.resetWave();if(window.CombatV29)CombatV29.start(W);GameState.waveActive=true;GameState.spawning=true;const plan=getWavePlan(W),boss=plan.boss,bd=boss?getBossDef(W):null;toggleBossTag(boss,bd&&bd.name);Music.setMood(boss?'boss':'battle');Ambience.setWave(W,boss);if(boss)sfx.boss();else sfx.wave();showWaveBanner(window.CombatV29?CombatV29.banner(W,bd?bd.name:'JEFE'):boss?`♛ OLEADA ${W} · ${bd.name.toUpperCase()}`:`⚔ OLEADA ${W}`);updateHUD();
   // Aviso la primera vez que aparece cada enemigo nuevo
-  [['swarm','swarm'],['brute','brutes'],['saboteur','saboteurs'],['healer','healers'],['wraith','wraiths']].filter(([k,pk])=>plan[pk]>0&&!GameState.seen[k]).forEach(([k],i)=>{GameState.seen[k]=1;later(1500+i*1900,()=>showRewardToast(`⚠ Nuevo: ${ENEMY_TYPES[k].name} — ${ENEMY_TIPS[k]}`))});
-  const list=[];[['goblin','goblins'],['raider','raiders'],['ogre','ogres'],['brute','brutes'],['saboteur','saboteurs'],['healer','healers'],['wraith','wraiths']].forEach(([k,pk])=>{for(let i=0;i<plan[pk];i++)list.push(k)});
+  [['swarm','swarm'],['brute','brutes'],['saboteur','saboteurs'],['healer','healers'],['wraith','wraiths'],
+   ['plague_assassin','plagueAssassins'],['oneeyed_ogre','oneEyedOgres'],['elder_ogre','elderOgres']]
+   .filter(([k,pk])=>plan[pk]>0&&!GameState.seen[k]).forEach(([k],i)=>{GameState.seen[k]=1;later(1500+i*1900,()=>showRewardToast(`⚠ Nuevo: ${ENEMY_TYPES[k].name} — ${ENEMY_TIPS[k]}`))});
+  const list=[];[['goblin','goblins'],['raider','raiders'],['ogre','ogres'],['brute','brutes'],['saboteur','saboteurs'],
+   ['healer','healers'],['wraith','wraiths'],['plague_assassin','plagueAssassins'],['oneeyed_ogre','oneEyedOgres'],['elder_ogre','elderOgres']]
+   .forEach(([k,pk])=>{for(let i=0;i<plan[pk];i++)list.push(k)});
   let sd=W*7919+13;const rnd=()=>(sd=(sd*1664525+1013904223)%4294967296)/4294967296;for(let i=list.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[list[i],list[j]]=[list[j],list[i]]}
-  // La plaga sale en un bloque seguido, en un punto aleatorio de la oleada
+  // La plaga sale en un bloque seguido, en un punto aleatorio de la oleada.
   if(plan.swarm)list.splice(Math.floor(rnd()*(list.length+1)),0,...Array(plan.swarm).fill('swarm'));
-  const n=list.length;let t=0;
-  list.forEach((k,i)=>{t+=window.CombatV29?CombatV29.spawnDelay(W,k):(k==='swarm'?170:500);later(t,()=>{spawnEnemy(k);if(i===n-1){if(boss)later(900,()=>{
-      const ready=window.BOSS_MODELS_READY||Promise.resolve();
-      ready.then(()=>{const be=spawnBoss();if(window.CombatV25)CombatV25.bossIntro(be);GameState.spawning=false});
-    });else GameState.spawning=false}})})}
+  const extraKeys=[...new Set(list.map(k=>MODEL_CFG[k]&&MODEL_CFG[k][0]).filter(k=>k&&MODEL_FILES[k]))];
+  const bossModel=boss&&bd&&bd.model&&bd.model[0]&&MODEL_FILES[bd.model[0]]?bd.model[0]:null;
+  if(bossModel)extraKeys.push(bossModel);
+  const ready=Promise.all(extraKeys.map(k=>ensureModelKey(k).catch(err=>{console.warn('Modelo extra no disponible:',k,err);return null})));
+  ready.then(()=>{
+    const n=list.length;let t=0;
+    list.forEach((k,i)=>{t+=window.CombatV29?CombatV29.spawnDelay(W,k):(k==='swarm'?170:500);later(t,()=>{spawnEnemy(k);if(i===n-1){if(boss)later(900,()=>{
+        const be=spawnBoss();if(window.CombatV25)CombatV25.bossIntro(be);GameState.spawning=false
+      });else GameState.spawning=false}})})
+  }).catch(()=>{GameState.spawning=false});}
 function checkWaveComplete(){if(GameState.waveActive&&!GameState.spawning&&GameState.enemies.length===0){GameState.waveActive=false;const g=25+GameState.wave*3;GameState.gold+=g;GameState.goldEarned+=g;toggleBossTag(false);updateHUD();writeBestWave(GameState.wave);Progress.onWave(GameState.wave);Save.write();Music.setMood('calm');Ambience.setWave(GameState.wave,false);sfx.waveDone();showRewardToast(`+${g} oro · Oleada superada`);if(window.CombatV29)CombatV29.reward(GameState.wave);if(window.EconomyV27){EconomyV27.waveReward(GameState.wave===WIN_WAVE&&!GameState.continued?()=>{GameState.winPending=true;later(900,()=>{GameState.winPending=false;showGameOver(true)})}:null)}else if(GameState.wave===WIN_WAVE&&!GameState.continued){GameState.winPending=true;later(900,()=>{GameState.winPending=false;showGameOver(true)})}}}
 
 /* ---------- Torres ---------- */
@@ -906,7 +978,11 @@ async function initGame(){
     setLoadState('error',0,err&&err.code==='webgl'?'TU NAVEGADOR NO PUEDE MOSTRAR GRÁFICOS 3D (WEBGL).':'NO SE PUDIERON CARGAR LOS MODELOS 3D. Si abriste el archivo directamente, usa un servidor local (ver README).');return}
   const cs=renderer.domElement;cs.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block';
   if(getComputedStyle(host).position==='static')host.style.position='relative';host.style.overflow='hidden';
-  renderer.setPixelRatio(S.pr);renderer.shadowMap.enabled=true;host.prepend(cs);
+  renderer.setPixelRatio(S.pr);
+    // Three.js r128 necesita outputEncoding sRGB para materiales glTF con texturas sRGB.
+    if('outputEncoding' in renderer && THREE.sRGBEncoding!==undefined) renderer.outputEncoding=THREE.sRGBEncoding;
+    renderer.toneMapping=THREE.NoToneMapping;renderer.toneMappingExposure=1;
+    renderer.shadowMap.enabled=true;host.prepend(cs);
   buildWorld();bindInput();fit();Settings.applyGfx();new ResizeObserver(fit).observe(host);updateHUD();requestAnimationFrame(frame);
   worldReady=true;booting=false;setLoadState('ready');
   // Carga diferida: la decoración 3D del mapa no bloquea el inicio de la partida.
